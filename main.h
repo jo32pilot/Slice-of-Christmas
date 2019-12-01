@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctime>
 #include "Window.h"
 
 #endif

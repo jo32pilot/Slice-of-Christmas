@@ -7,6 +7,7 @@ const char* Window::windowTitle = "GLFW Starter Project";
 
 // Objects to display.
 Cube* Window::skybox;
+Terrain* Window::terrain;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -83,6 +84,7 @@ bool Window::initializeProgram() {
 bool Window::initializeObjects()
 {
 	skybox = new Cube(5.0f);
+	terrain = new Terrain();
 
 	return true;
 }
@@ -91,6 +93,7 @@ void Window::cleanUp()
 {
 	// Deallcoate the objects.
 	delete skybox;
+	delete terrain;
 
 	// Delete the shader program.
 	glDeleteProgram(program);
@@ -185,6 +188,13 @@ void Window::displayCallback(GLFWwindow* window)
 	// Clear the color and depth buffers.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
+	glUseProgram(program);
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(terrain->getModel()));
+	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
+
+	terrain->draw();
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);

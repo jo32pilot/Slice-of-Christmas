@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "Object.h"
+#include "Terrain.h"
 #include "shader.h"
 #include "Cube.h"
 #include "loadBox.h"
@@ -44,6 +45,7 @@ public:
 	static GLfloat yaw, pitch;
 	static GLboolean firstMouse;
 	static double fov;
+	static Terrain* terrain;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

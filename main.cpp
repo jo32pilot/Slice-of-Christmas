@@ -68,6 +68,9 @@ int main(void)
 	
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	unsigned int timeSeed = (unsigned int)time(NULL);
+	srand(timeSeed);
+
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(window))
 	{

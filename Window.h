@@ -22,6 +22,7 @@
 #include "loadBox.h"
 
 #define WALK_SPEED 200.0f
+#define CENTER_DIVIDER 2
 
 class Window
 {
@@ -39,6 +40,10 @@ public:
 	static std::vector<std::string> faces;
 	static GLfloat deltaTime;
 	static GLfloat lastFrame;
+	static GLfloat lastX, lastY;
+	static GLfloat yaw, pitch;
+	static GLboolean firstMouse;
+	static double fov;
 
 	static bool initializeProgram();
 	static bool initializeObjects();
@@ -48,8 +53,10 @@ public:
 	static void idleCallback();
 	static void displayCallback(GLFWwindow*);
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-	static void Window::cursorPosFun(GLFWwindow* wind, double x, double y);
 	static void processInput(GLFWwindow *window);
+	static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
 
 };
 

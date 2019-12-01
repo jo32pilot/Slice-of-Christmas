@@ -32,16 +32,22 @@ GLuint Window::skyboxViewLoc;
 GLuint Window::textureID;
 
 std::vector<std::string> Window::faces = {
-	"assets/right.png",
-	"assets/left.png",
+	"assets/front.png",
+	"assets/back.png",
 	"assets/up.png",
 	"assets/down.png",
-	"assets/front.png",
-	"assets/back.png"
+	"assets/right.png",
+	"assets/left.png"
 };
 
 GLfloat Window::deltaTime = 0.0f;
 GLfloat Window::lastFrame = 0.0f;
+GLfloat Window::lastX;
+GLfloat Window::lastY;
+GLfloat Window::yaw = 0;
+GLfloat Window::pitch = 0;
+GLboolean Window::firstMouse = true;
+double Window::fov = 60.0f;
 
 
 bool Window::initializeProgram() {
@@ -99,6 +105,9 @@ GLFWwindow* Window::createWindow(int width, int height)
 		std::cerr << "Failed to initialize GLFW" << std::endl;
 		return NULL;
 	}
+
+	lastX = width / CENTER_DIVIDER;
+	lastY = height / CENTER_DIVIDER;
 
 	// 4x antialiasing.
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -161,7 +170,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 
 	// Set the projection matrix.
-	Window::projection = glm::perspective(glm::radians(60.0), 
+	Window::projection = glm::perspective(glm::radians(fov), 
 		double(width) / (double)height, 1.0, 1000.0);
 }
 
@@ -188,21 +197,13 @@ void Window::displayCallback(GLFWwindow* window)
 
 	skybox->draw(textureID);
 
+
+	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
 	// Gets events, including input such as keyboard and mouse or window resizing.
 	glfwPollEvents();
 	// Swap buffers.
 	glfwSwapBuffers(window);
 }
-
-/*
-void Window::cursorPosFun(GLFWwindow* wind, double x, double y) {
-	glm::vec3 Window::eye(0, 0, 20); // Camera position.
-	glm::vec3 Window::center(0, 0, 0); // The point we are looking at.
-	glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
-
-	// View matrix, defined by eye, center and up.
-	glm::mat4 Window::view = glm::lookAt(Window::eye, Window::center, Window::up)
-}*/
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -243,5 +244,53 @@ void Window::processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		eye += glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 	}
-	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
+}
+
+void Window::mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+	lastX = xpos;
+	lastY = ypos;
+
+	float sensitivity = 0.05;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.y = sin(glm::radians(pitch));
+	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	center = glm::normalize(front);
+}
+
+
+void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	if (fov >= 1.0f && fov <= 45.0f) {
+		fov -= yoffset;
+	}
+	if (fov <= 1.0f) {
+		fov = 1.0f;
+	}
+	if (fov >= 45.0f) {
+		fov = 45.0f;
+	}
+	Window::projection = glm::perspective(glm::radians(fov),
+		double(width) / (double)height, 1.0, 1000.0);
 }

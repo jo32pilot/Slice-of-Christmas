@@ -14,6 +14,13 @@ void setup_callbacks(GLFWwindow* window)
 	glfwSetKeyCallback(window, Window::keyCallback);
 	// Set the window resize callback.
 	glfwSetWindowSizeCallback(window, Window::resizeCallback);
+
+	// Set the mouse callback.
+	glfwSetCursorPosCallback(window, Window::mouseCallback);
+
+	// Set the scroll callback.
+	glfwSetScrollCallback(window, Window::scrollCallback);
+
 }
 
 void setup_opengl_settings()
@@ -59,6 +66,8 @@ int main(void)
 	// Initialize objects/pointers for rendering; exit if initialization fails.
 	if (!Window::initializeObjects()) exit(EXIT_FAILURE);
 	
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(window))
 	{

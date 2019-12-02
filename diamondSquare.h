@@ -6,6 +6,7 @@
 #define DIM 129
 #define NUM_VERTICES DIM * DIM
 #define SCALE_FACTOR 16
+#define RE_CENTER 1000
 
 void diamondSquare(int arr[][DIM], int size, int currSize);
 void squareStep(int arr[][DIM], int size, int x, int z, int reach);

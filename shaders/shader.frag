@@ -6,12 +6,24 @@
 in float sampleExtraOutput;
 
 uniform vec3 color;
+uniform int normalColoring;
+
+in vec3 normalOutput;
+in vec3 posOutput;
 
 // You can output many things. The first vec4 type output determines the color of the fragment
 out vec4 fragColor;
 
 void main()
 {
-    // Use the color passed in. An alpha of 1.0f means it is not transparent.
-    fragColor = vec4(color, sampleExtraOutput);
+
+	vec3 norm = normalize(normalOutput);
+
+	if(normalColoring != 0){
+        fragColor = vec4((norm + 1) / 2, 1.0);
+    }
+	else{
+		// Use the color passed in. An alpha of 1.0f means it is not transparent.
+		fragColor = vec4(color, sampleExtraOutput);
+	}
 }

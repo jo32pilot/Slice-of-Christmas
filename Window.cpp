@@ -24,6 +24,7 @@ GLuint Window::projectionLoc; // Location of projection in shader.
 GLuint Window::viewLoc; // Location of view in shader.
 GLuint Window::modelLoc; // Location of model in shader.
 GLuint Window::colorLoc; // Location of color in shader.
+GLuint Window::normalColoringLoc; // Location of normalColoring boolean in shader
 
 GLuint Window::skyboxProgram;
 
@@ -49,6 +50,7 @@ GLfloat Window::yaw = 0;
 GLfloat Window::pitch = 0;
 GLboolean Window::firstMouse = true;
 double Window::fov = 60.0f;
+GLboolean Window::normalColoring = false;
 
 
 bool Window::initializeProgram() {
@@ -71,6 +73,7 @@ bool Window::initializeProgram() {
 	viewLoc = glGetUniformLocation(program, "view");
 	modelLoc = glGetUniformLocation(program, "model");
 	colorLoc = glGetUniformLocation(program, "color");
+	normalColoringLoc = glGetUniformLocation(program, "normalColoring");
 
 	glUseProgram(skyboxProgram);
 	skyboxProjectionLoc = glGetUniformLocation(skyboxProgram, "projection");
@@ -193,6 +196,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(terrain->getModel()));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
+	glUniform1i(normalColoringLoc, normalColoring);
 
 	terrain->draw();
 
@@ -202,8 +206,8 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(skyboxProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
 
 	skybox->draw(textureID);
 
@@ -227,7 +231,9 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);				
 			break;
-
+		case GLFW_KEY_N:
+			normalColoring = !normalColoring;
+			break;
 		default:
 			break;
 		}

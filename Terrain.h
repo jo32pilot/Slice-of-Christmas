@@ -8,7 +8,7 @@
 class Terrain : public Object {
 	private:
 		GLuint vao;
-		GLuint vbo;
+		GLuint vbos[2];
 		GLint numVertices;
 
 	public:

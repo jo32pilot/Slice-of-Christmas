@@ -34,7 +34,7 @@ public:
 	static glm::mat4 projection;
 	static glm::mat4 view;
 	static glm::vec3 eye, center, up;
-	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc;
+	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc, normalColoringLoc;
 	static GLuint skyboxProgram, skyboxProjectionLoc, skyboxViewLoc;
 	static GLuint textureID;
 	static Cube* skybox;
@@ -46,6 +46,7 @@ public:
 	static GLboolean firstMouse;
 	static double fov;
 	static Terrain* terrain;
+	static GLboolean normalColoring;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

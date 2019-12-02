@@ -8,16 +8,32 @@ Terrain::Terrain() {
 	int heights[DIM][DIM] = {};
 	diamondSquare(heights, DIM, DIM);
 	
-	glm::vec3 terrain[NUM_VERTICES] = {};
-	int k = 0;
-	for (int i = 0; i < DIM; ++i) {
-		for (int j = 0; j < DIM; ++j) {
+	std::vector<glm::vec3> vertices;
+
+	// if at last row of veritces, then no more triangles.
+	for (int i = 0; i < DIM - 1; ++i) {
+
+		// if at last column of veritces, then move on.
+		for (int j = 0; j < DIM - 1; ++j) {
+
 			GLfloat x = i * SCALE_FACTOR;
 			GLfloat z = j * SCALE_FACTOR;
-			terrain[k] = glm::vec3(x, heights[i][j], z);
-			++k;
+			GLfloat xNext = (i + 1) * SCALE_FACTOR;
+			GLfloat zNext = (j + 1) * SCALE_FACTOR;
+
+			// Must be pushed in this order for correctly drawn triangles
+			// and consistent orientation (clockwise).
+			vertices.push_back(glm::vec3(x, heights[i][j], z));
+			vertices.push_back(glm::vec3(x, heights[i][j + 1], zNext));
+			vertices.push_back(glm::vec3(xNext, heights[i + 1][j], z));
+			vertices.push_back(glm::vec3(xNext, heights[i + 1][j], z));
+			vertices.push_back(glm::vec3(x, heights[i][j + 1], zNext));
+			vertices.push_back(glm::vec3(xNext, heights[i + 1][j + 1], zNext));
+
 		}
 	}
+
+	this->numVertices = vertices.size();
 
 	// Generate a vertex array (VAO) and two vertex buffer objects (VBO).
 	glGenVertexArrays(1, &vao);
@@ -29,8 +45,8 @@ Terrain::Terrain() {
 	// Bind to the first VBO. We will use it to store the vertices.
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	// Pass in the data.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(terrain),
-		&terrain, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
+		vertices.data(), GL_STATIC_DRAW);
 	// Enable vertex attribute 0. 
 	// We will be able to access vertices through it.
 	glEnableVertexAttribArray(0);
@@ -56,7 +72,7 @@ Terrain::~Terrain() {
 void Terrain::draw() {
 	glBindVertexArray(vao);
 
-	glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 
 	// Unbind from the VAO.
 	glBindVertexArray(0);

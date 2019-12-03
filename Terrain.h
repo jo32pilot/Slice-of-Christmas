@@ -2,14 +2,28 @@
 #define TERRAIN_H
 
 #include <vector>
+#include <iostream>
 #include "Object.h"
 #include "diamondSquare.h"
+
+typedef struct VertexStruct {
+	glm::vec3 pos;
+	glm::vec3 normal;
+} Vert;
+
+typedef struct TriangleStruct {
+	int vertInd[3];
+} Triangle;
 
 class Terrain : public Object {
 	private:
 		GLuint vao;
-		GLuint vbos[2];
-		GLint numVertices;
+		GLuint vbos[3];
+		GLint numIndices;
+
+		GLuint debugVao;
+		GLuint debugVbo;
+		GLint debugNum;
 
 	public:
 		Terrain();

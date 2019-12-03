@@ -84,5 +84,5 @@ void diamondStep(int arr[][DIM], int size, int x, int z, int reach)
 }
 
 float random(int range) {
-	return (rand() % (range * 2)) - range;
+	return (rand() % (range * 4)) - range;
 }

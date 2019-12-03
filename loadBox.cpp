@@ -35,3 +35,30 @@ GLuint loadBox(std::vector<std::string> pics){
 	std::cout << textureID << std::endl;
 	return textureID; // Return the ID of the texture
 }
+
+// Loads image as texture, returns ID of texture
+GLuint loadTextures(std::string path)
+{
+	GLuint textureId;
+	glGenTextures(1, &textureId); // Get unique ID for texture
+	glBindTexture(GL_TEXTURE_2D, textureId); // Tell OpenGL which texture to edit
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // set bi-linear interpolation
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // for both filtering modes
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture edge mode
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+	// load image from disk; uses third party Image library
+	// Depending on the image library, the texture image may have to be flipped vertically
+	// Load image into OpenGL texture in GPU memory:
+	glTexImage2D(GL_TEXTURE_2D, // Always GL_TEXTURE_2D for image textures
+		0, // 0 for now
+		GL_RGB, // Format OpenGL uses for image without alpha channel
+		width, height, // Width and height
+		0, // The border of the image
+		GL_RGB, // GL_RGB, because pixels are stored in RGB format
+		GL_UNSIGNED_BYTE, // GL_UNSIGNED_BYTE, because pixels are stored as unsigned numbers
+		data); // The actual RGB image data
+	return textureId; // Return the ID of the texture
+}

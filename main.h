@@ -1,7 +1,6 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#define STB_IMAGE_IMPLEMENTATION
 
 #ifdef __APPLE__
 #define GLFW_INCLUDE_GLCOREARB

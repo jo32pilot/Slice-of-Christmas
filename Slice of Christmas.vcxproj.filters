@@ -89,11 +89,5 @@
     <None Include="shaders\skybox.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\sphere.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\sphere.vert">
-      <Filter>shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

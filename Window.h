@@ -47,6 +47,7 @@ public:
 	static double fov;
 	static Terrain* terrain;
 	static GLboolean normalColoring;
+	static GLuint terrainTexture;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

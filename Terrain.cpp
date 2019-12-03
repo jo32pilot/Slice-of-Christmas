@@ -5,12 +5,16 @@ Terrain::Terrain() {
 	this->color = glm::vec3(0, 1, 0);
 	this->model = glm::mat4(1);
 
-	//TODO change 4 corner elements
+	unsigned int timeSeed = (unsigned int)time(NULL);
+	srand(timeSeed);
+
 	int heights[DIM][DIM] = {};
-	heights[0][DIM - 1] = 10;
-	heights[DIM - 1][0] = 2;
-	heights[DIM - 1][DIM - 1] = 3;
-	heights[0][0] = 0;
+	heights[0][DIM - 1] = rand() % DIM;
+	heights[DIM - 1][0] = rand() % DIM;
+	heights[DIM - 1][DIM - 1] = rand() % DIM;
+	heights[0][0] = rand() % DIM;
+
+
 	diamondSquare(heights, DIM, DIM);
 	
 	std::vector<glm::vec3> vertices;
@@ -18,7 +22,7 @@ Terrain::Terrain() {
 	std::vector<Vert> verts;
 	std::vector<Triangle> faces;
 	std::vector<int> indices;
-	int ind = 0;
+	std::vector<glm::vec2> texCoords;
 
 	for (int i = 0; i < DIM; ++i) {
 
@@ -30,41 +34,17 @@ Terrain::Terrain() {
 				glm::vec3(x, heights[i][j], z),
 				glm::vec3(0.0f)
 			});
-			/*GLfloat xNext = (i + 1) * SCALE_FACTOR - RE_CENTER;
-			GLfloat zNext = (j + 1) * SCALE_FACTOR - RE_CENTER;
-
-			Vert startVertex = {
-				glm::vec3(x, heights[i][j], z)
-			};
-			Vert rightVertex = {
-				glm::vec3(x, heights[i][j + 1], zNext)
-			};
-			Vert downVertex = {
-				glm::vec3(xNext, heights[i + 1][j], z)
-			};
-			Vert endVertex = {
-				glm::vec3(xNext, heights[i + 1][j + 1], zNext)
-			};
-
-			Triangle topTri = { {} };
-			Triangle botTri = { {} };
-
-			// Must be pushed in this order for correctly drawn triangles
-			// and consistent orientation (clockwise).
-			verts.push_back(startVertex);
-			topTri.vertInd[0] = ind;
-
-			verts.push_back(rightVertex);
-			verts.push_back(downVertex);
-			verts.push_back(downVertex);
-			verts.push_back(rightVertex);
-			verts.push_back(endVertex);*/
-
 		}
 	}
 
 	// Settup indices and triangle array
-	for (int i = 0; i < (DIM - 1) * (DIM - 1); ++i) {
+	// DIM * (DIM - 1) to prevent creating triangles that shouldn't exist.
+	for (int i = 0; i < DIM * (DIM - 1); ++i) {
+
+		// To prevent triangles that shouldn't exist.
+		if ((i + 1) % DIM == 0) {
+			continue;
+		}
 
 		// Must be pushed in this order for correctly drawn triangles
 		// and consistent orientation (clockwise).
@@ -101,11 +81,19 @@ Terrain::Terrain() {
 		normals.push_back(verts[i].normal);
 	}
 
+	// Settup textures
+	for (int i = 0; i < DIM; ++i) {
+		for (int j = 0; j < DIM; ++j) {
+			texCoords.push_back({i, j});
+		}
+	}
+
+
 	this->numIndices = indices.size();
 
 	// Generate a vertex array (VAO) and two vertex buffer objects (VBO).
 	glGenVertexArrays(1, &vao);
-	glGenBuffers(3, vbos);
+	glGenBuffers(4, vbos);
 
 	// Bind to the VAO.
 	glBindVertexArray(vao);
@@ -128,42 +116,28 @@ Terrain::Terrain() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
+	// Bind to the third VBO. We will use it to store texture coordinates.
+	glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+	// Pass in the data.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * texCoords.size(),
+		texCoords.data(), GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0);
 
 	// Bind to the third VBO. We will use it to store the indices.
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[2]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[3]);
 	// Pass in the data.
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(),
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(),
 		indices.data(), GL_STATIC_DRAW);
 
 	// Unbind from the VBOs.
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	// Unbind from the VAO.
 	glBindVertexArray(0);
-
-	std::vector<glm::vec3> debug;
-	for (int i = 0; i < indices.size(); ++i) {
-		debug.push_back(vertices[indices[i]]);
-		debug.push_back(vertices[indices[i]] + 4.0f * normals[indices[i]]);
-	}
-	this->debugNum = debug.size();
-
-	glGenVertexArrays(1, &debugVao);
-	glGenBuffers(1, &debugVbo);
-
-	glBindVertexArray(debugVao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, debugVbo);
-	glBufferData(GL_ARRAY_BUFFER, debug.size() * sizeof(glm::vec3),
-		debug.data(), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 }
 
 Terrain::~Terrain() {
-	glDeleteBuffers(3, vbos);
+	glDeleteBuffers(4, vbos);
 	glDeleteVertexArrays(1, &vao);
 }
 
@@ -175,13 +149,13 @@ void Terrain::draw() {
 	// Unbind from the VAO.
 	glBindVertexArray(0);
 
-	glBindVertexArray(debugVao);
-	glDrawArrays(GL_LINES, 0, debugNum);
-	glBindVertexArray(0);
 }
 
 void Terrain::draw(GLuint textureID) {
-	return;
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
 void Terrain::update() {

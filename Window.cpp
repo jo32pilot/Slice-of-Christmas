@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include "Window.h"
 
 int Window::width;
@@ -51,6 +53,7 @@ GLfloat Window::pitch = 0;
 GLboolean Window::firstMouse = true;
 double Window::fov = 60.0f;
 GLboolean Window::normalColoring = false;
+GLuint Window::terrainTexture;
 
 
 bool Window::initializeProgram() {
@@ -80,6 +83,7 @@ bool Window::initializeProgram() {
 	skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
 
 	textureID = loadBox(faces);
+	terrainTexture = loadTextures("assets/terrainTexture.png");
 
 	return true;
 }
@@ -191,6 +195,9 @@ void Window::displayCallback(GLFWwindow* window)
 	// Clear the color and depth buffers.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
 	glUseProgram(program);
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -198,7 +205,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
 
-	terrain->draw();
+	terrain->draw(terrainTexture);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);
@@ -206,8 +213,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(skyboxProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+
 
 	skybox->draw(textureID);
 

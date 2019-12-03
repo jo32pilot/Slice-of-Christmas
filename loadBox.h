@@ -8,9 +8,9 @@
 #include <vector>
 #include "stb_image.h"
 
-
 #define SIDES 6
 
 GLuint loadBox(std::vector<std::string> pics);
+GLuint loadTextures(std::string path);
 
 #endif

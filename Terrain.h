@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <iostream>
+#include <random>
+#include <time.h>
 #include "Object.h"
 #include "diamondSquare.h"
 
@@ -18,12 +20,9 @@ typedef struct TriangleStruct {
 class Terrain : public Object {
 	private:
 		GLuint vao;
-		GLuint vbos[3];
+		GLuint vbos[4];
 		GLint numIndices;
 
-		GLuint debugVao;
-		GLuint debugVbo;
-		GLint debugNum;
 
 	public:
 		Terrain();

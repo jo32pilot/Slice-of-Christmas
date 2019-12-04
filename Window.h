@@ -24,6 +24,9 @@
 
 #define WALK_SPEED 200.0f
 #define CENTER_DIVIDER 2
+#define GRAVITY -300
+#define JUMP_POWER 100
+#define TERRAIN_HEIGHT 500
 
 class Window
 {
@@ -48,6 +51,8 @@ public:
 	static Terrain* terrain;
 	static GLboolean normalColoring;
 	static GLuint terrainTexture;
+	static GLfloat upwardsSpeed;
+	static GLboolean inAir;
 
 	static bool initializeProgram();
 	static bool initializeObjects();
@@ -60,7 +65,7 @@ public:
 	static void processInput(GLFWwindow *window);
 	static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-
+	static void setDeltaTime();
 
 };
 

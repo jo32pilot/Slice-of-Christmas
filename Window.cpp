@@ -191,10 +191,18 @@ void Window::idleCallback()
 	// Gravity to pull camera down
 	upwardsSpeed += (GRAVITY * deltaTime);
 	eye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
-	if (eye[1] < TERRAIN_HEIGHT) {
+	/*if (eye[1] < TERRAIN_HEIGHT) {
 		inAir = false;
 		upwardsSpeed = 0;
 		eye[1] = TERRAIN_HEIGHT;
+	}*/
+
+	// Maybe switch parameters?
+	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
+	if (eye[1] < terrainHeight) {
+		inAir = false;
+		upwardsSpeed = 0;
+		eye[1] = terrainHeight;
 	}
 }
 
@@ -215,6 +223,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
 
+	//terrain->draw();
 	terrain->draw(terrainTexture);
 
 	// Draw skybox
@@ -268,14 +277,13 @@ void Window::processInput(GLFWwindow *window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		glm::vec3 newPos = systemWalkSpeed * center;
-		eye += glm::vec3(newPos[0], 0, newPos[2]);
+		eye -= glm::vec3(newPos[0], 0, newPos[2]);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		eye -= glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		eye += glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
-		upwardsSpeed = JUMP_POWER;
 	}
 	if (!inAir && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		inAir = true;

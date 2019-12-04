@@ -22,6 +22,9 @@ class Terrain : public Object {
 		GLuint vao;
 		GLuint vbos[4];
 		GLint numIndices;
+		GLint heights[DIM][DIM];
+		GLfloat barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
+
 
 
 	public:
@@ -30,5 +33,7 @@ class Terrain : public Object {
 		void draw();
 		void draw(GLuint textureID);
 		void update();
+		GLint getHeightOfTerrain(GLfloat worldX, GLfloat worldZ);
+
 };
 #endif

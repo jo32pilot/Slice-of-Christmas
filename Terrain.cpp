@@ -8,7 +8,12 @@ Terrain::Terrain() {
 	unsigned int timeSeed = (unsigned int)time(NULL);
 	srand(timeSeed);
 
-	int heights[DIM][DIM] = {};
+	for (int i = 0; i < DIM; ++i) {
+		for (int j = 0; j < DIM; ++j) {
+			heights[i][j] = 0;
+		}
+	}
+
 	heights[0][DIM - 1] = rand() % DIM;
 	heights[DIM - 1][0] = rand() % DIM;
 	heights[DIM - 1][DIM - 1] = rand() % DIM;
@@ -144,7 +149,7 @@ Terrain::~Terrain() {
 void Terrain::draw() {
 	glBindVertexArray(vao);
 
-	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_LINES, numIndices, GL_UNSIGNED_INT, 0);
 
 	// Unbind from the VAO.
 	glBindVertexArray(0);
@@ -160,4 +165,58 @@ void Terrain::draw(GLuint textureID) {
 
 void Terrain::update() {
 	return;
+}
+
+GLint Terrain::getHeightOfTerrain(GLfloat worldX, GLfloat worldZ) {
+	//std::cout << std::endl;
+	GLfloat terrainX = worldX + RE_CENTER;
+	GLfloat terrainZ = worldZ + RE_CENTER;
+	//std::cout << "worldX: " << worldX << std::endl;
+	//std::cout << "worldZ: " << worldZ << std::endl;
+	GLfloat gridSquareSize = (GLfloat)(DIM * SCALE_FACTOR) / (GLfloat)(DIM - 1);
+	//std::cout << "gridSquareSize: " << gridSquareSize << std::endl;
+	//int gridX = worldX / gridSquareSize;
+	int gridX = terrainX / gridSquareSize;
+	//std::cout << "gridX: " << gridX << std::endl;
+	//int gridZ = worldZ/ gridSquareSize;
+	int gridZ = terrainZ / gridSquareSize;
+	//std::cout << "gridZ: " << gridZ << std::endl;
+	if (gridX >= DIM - 1 || gridZ >= DIM - 1 || gridX < 0 || gridZ < 0) {
+		return 0;
+	}
+	GLfloat xCoord = (GLfloat)((GLint)terrainX % (GLint)gridSquareSize) / gridSquareSize;
+	//std::cout << "xCoord: " << xCoord << std::endl;
+
+	GLfloat zCoord = (GLfloat)((GLint)terrainZ % (GLint)gridSquareSize) / gridSquareSize;
+	//std::cout << "zCoord: " << zCoord << std::endl;
+
+	GLfloat answer;
+	if (xCoord <= 1 - zCoord) {
+		answer = barryCentric(
+			{ 0, heights[gridX][gridZ], 0 },
+			{ 1, heights[gridX + 1][gridZ], 0 },
+			{ 0, heights[gridX][gridZ + 1], 1 },
+			{ xCoord, zCoord });
+	}
+	else {
+		answer = barryCentric(
+			{ 1, heights[gridX + 1][gridZ], 0 },
+			{ 1, heights[gridX + 1][gridZ + 1], 1 },
+			{ 0, heights[gridX][gridZ + 1], 1 },
+			{ xCoord, zCoord });
+	}
+	//std::cout << "answer: " << answer << std::endl;
+	return answer;
+}
+
+GLfloat Terrain::barryCentric(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos) {
+	/*std::cout << "p1: " << p1.x << " " << p1.y << " " << p1.z << std::endl;
+	std::cout << "p2: " << p2.x << " " << p2.y << " " << p2.z << std::endl;
+	std::cout << "p3: " << p3.x << " " << p3.y << " " << p3.z << std::endl;*/
+
+	GLfloat det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+	GLfloat l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+	GLfloat l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+	GLfloat l3 = 1.0f - l1 - l2;
+	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }

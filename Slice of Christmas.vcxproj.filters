@@ -42,6 +42,12 @@
     <ClCompile Include="Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Building.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -74,9 +80,14 @@
     <ClInclude Include="Terrain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Building.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="shaders\shader.frag">
       <Filter>shaders</Filter>
     </None>
@@ -87,6 +98,13 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\skybox.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="packages.config" />
+    <None Include="imported.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="imported.frag">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

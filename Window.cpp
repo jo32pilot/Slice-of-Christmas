@@ -191,12 +191,6 @@ void Window::idleCallback()
 	// Gravity to pull camera down
 	upwardsSpeed += (GRAVITY * deltaTime);
 	eye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
-	/*if (eye[1] < TERRAIN_HEIGHT) {
-		inAir = false;
-		upwardsSpeed = 0;
-		eye[1] = TERRAIN_HEIGHT;
-	}*/
-
 	// Maybe switch parameters?
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
 	if (eye[1] < terrainHeight) {
@@ -270,20 +264,36 @@ void Window::processInput(GLFWwindow *window)
 
 	GLfloat systemWalkSpeed = WALK_SPEED * deltaTime;
 
+	// Current means of preventing player from going outside 
+	// of skybox restricts player too much. Fix later.
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		// So moving doesn't cause jumping
 		glm::vec3 newPos = systemWalkSpeed * center;
-		eye += glm::vec3(newPos[0], 0, newPos[2]);
+		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
+		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+			eye += glm::vec3(newPos[0], 0, newPos[2]);
+		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		glm::vec3 newPos = systemWalkSpeed * center;
-		eye -= glm::vec3(newPos[0], 0, newPos[2]);
+		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
+		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+			eye -= glm::vec3(newPos[0], 0, newPos[2]);
+		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		eye -= glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
+		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
+		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
+		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+			eye = movedEye;
+		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		eye += glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
+		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
+		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
+		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+			eye = movedEye;
+		}
 	}
 	if (!inAir && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		inAir = true;

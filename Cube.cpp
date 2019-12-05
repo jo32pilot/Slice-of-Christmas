@@ -29,14 +29,14 @@ Cube::Cube(float size)
 	// The 8 vertices of a cube.
 	std::vector<glm::vec3> vertices
 	{
-		glm::vec3(-1000, 1000, 1000),
-		glm::vec3(-1000, -1000, 1000),
-		glm::vec3(1000, -1000, 1000),
-		glm::vec3(1000, 1000, 1000),
-		glm::vec3(-1000, 1000, -1000),
-		glm::vec3(-1000, -1000, -1000),
-		glm::vec3(1000, -1000, -1000),
-		glm::vec3(1000, 1000, -1000)
+		glm::vec3(-SKYBOX_SIZE, SKYBOX_SIZE, SKYBOX_SIZE),
+		glm::vec3(-SKYBOX_SIZE, -SKYBOX_SIZE, SKYBOX_SIZE),
+		glm::vec3(SKYBOX_SIZE, -SKYBOX_SIZE, SKYBOX_SIZE),
+		glm::vec3(SKYBOX_SIZE, SKYBOX_SIZE, SKYBOX_SIZE),
+		glm::vec3(-SKYBOX_SIZE, SKYBOX_SIZE, -SKYBOX_SIZE),
+		glm::vec3(-SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE),
+		glm::vec3(SKYBOX_SIZE, -SKYBOX_SIZE, -SKYBOX_SIZE),
+		glm::vec3(SKYBOX_SIZE, SKYBOX_SIZE, -SKYBOX_SIZE)
 	}; 
 
 	// Each ivec3(v1, v2, v3) define a triangle consists of vertices v1, v2 

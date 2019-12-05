@@ -13,6 +13,8 @@
 
 #include "Object.h"
 
+#define SKYBOX_SIZE 1000
+
 class Cube : public Object
 {
 private:

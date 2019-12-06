@@ -12,5 +12,7 @@
 
 GLuint loadBox(std::vector<std::string> pics);
 GLuint loadTextures(std::string path);
+unsigned int TextureFromFile(const char *path, const std::string &directory);
+
 
 #endif

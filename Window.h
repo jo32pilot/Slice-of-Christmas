@@ -27,6 +27,7 @@
 #define GRAVITY -300
 #define JUMP_POWER 100
 #define TERRAIN_HEIGHT 500
+#define PLAYER_HEIGHT 20
 
 class Window
 {

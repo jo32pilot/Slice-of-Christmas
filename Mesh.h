@@ -5,6 +5,11 @@
 #include <GL/glew.h>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 
 struct Vertex {
 	glm::vec3 Position;
@@ -15,6 +20,8 @@ struct Vertex {
 struct Texture {
 	unsigned int id;
 	std::string type;
+	aiString path;
+
 };
 
 class Mesh {

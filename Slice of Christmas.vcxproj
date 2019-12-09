@@ -127,9 +127,9 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="imported.frag" />
-    <None Include="imported.vert" />
     <None Include="packages.config" />
+    <None Include="shaders\imported.frag" />
+    <None Include="shaders\imported.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\skybox.frag" />

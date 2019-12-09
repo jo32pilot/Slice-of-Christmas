@@ -10,6 +10,8 @@ const char* Window::windowTitle = "GLFW Starter Project";
 // Objects to display.
 Cube* Window::skybox;
 Terrain* Window::terrain;
+Model* Window::tree;
+Model* Window::cottage;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -21,7 +23,6 @@ glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
 glm::mat4 Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
 
 GLuint Window::program; // The shader program id.
-
 GLuint Window::projectionLoc; // Location of projection in shader.
 GLuint Window::viewLoc; // Location of view in shader.
 GLuint Window::modelLoc; // Location of model in shader.
@@ -29,9 +30,13 @@ GLuint Window::colorLoc; // Location of color in shader.
 GLuint Window::normalColoringLoc; // Location of normalColoring boolean in shader
 
 GLuint Window::skyboxProgram;
-
 GLuint Window::skyboxProjectionLoc;
 GLuint Window::skyboxViewLoc;
+
+GLuint Window::importedProgram;
+GLuint Window::importedProjectionLoc;
+GLuint Window::importedViewLoc;
+GLuint Window::importedModelLoc;
 
 GLuint Window::textureID;
 
@@ -61,6 +66,7 @@ bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
 	skyboxProgram = LoadShaders("shaders/skybox.vert", "shaders/skybox.frag");
+	importedProgram = LoadShaders("shaders/imported.vert", "shaders/imported.frag");
 
 
 	// Check the shader program.
@@ -83,6 +89,11 @@ bool Window::initializeProgram() {
 	skyboxProjectionLoc = glGetUniformLocation(skyboxProgram, "projection");
 	skyboxViewLoc = glGetUniformLocation(skyboxProgram, "view");
 
+	glUseProgram(importedProgram);
+	importedProjectionLoc = glGetUniformLocation(importedProgram, "projection");
+	importedViewLoc = glGetUniformLocation(importedProgram, "view");
+	importedModelLoc = glGetUniformLocation(importedProgram, "model");
+
 	textureID = loadBox(faces);
 	terrainTexture = loadTextures("assets/terrainTexture.png");
 
@@ -93,6 +104,8 @@ bool Window::initializeObjects()
 {
 	skybox = new Cube(5.0f);
 	terrain = new Terrain();
+	tree = new Model("assets/christmas-tree/CartoonTree.obj");
+	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 
 	return true;
 }
@@ -102,10 +115,13 @@ void Window::cleanUp()
 	// Deallcoate the objects.
 	delete skybox;
 	delete terrain;
+	delete tree;
+	delete cottage;
 
 	// Delete the shader program.
 	glDeleteProgram(program);
 	glDeleteProgram(skyboxProgram);
+	glDeleteProgram(importedProgram);
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -221,15 +237,19 @@ void Window::displayCallback(GLFWwindow* window)
 	terrain->draw(terrainTexture);
 
 	// Draw skybox
-	glDepthMask(GL_FALSE);
+	/*glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgram);
 	glUniformMatrix4fv(skyboxProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
+	skybox->draw(textureID);*/
 
+	glUseProgram(importedProgram);
+	glUniformMatrix4fv(importedProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(importedViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 
-	skybox->draw(textureID);
-
+	cottage->Draw(importedProgram);
 
 	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
 	// Gets events, including input such as keyboard and mouse or window resizing.

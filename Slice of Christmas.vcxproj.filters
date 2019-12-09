@@ -101,10 +101,10 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="imported.vert">
+    <None Include="shaders\imported.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="imported.frag">
+    <None Include="shaders\imported.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

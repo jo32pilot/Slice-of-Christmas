@@ -10,15 +10,12 @@ GLuint loadBox(std::vector<std::string> pics){
 	int width, height, nrChannels;
 	for (unsigned int i = 0; i < SIDES; i++)
 	{
-		std::cout << "Loading side" << std::endl;
 		unsigned char *data = stbi_load(pics[i].c_str(), &width, &height, &nrChannels, 0);
 		if (data)
 		{
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
 			);
-			std::cout << width << " " << height << " " << nrChannels << std::endl;
-			std::cout << pics[i].c_str() << std::endl;
 			stbi_image_free(data);
 		}
 		else

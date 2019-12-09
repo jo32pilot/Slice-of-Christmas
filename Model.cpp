@@ -48,6 +48,10 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
 
+	std::cout << std::endl;
+	std::cout << "mNumVeritces: " << mesh->mNumVertices << std::endl;
+	std::cout << std::endl;
+
 	// Walk through each of the mesh's vertices
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
@@ -65,10 +69,11 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
 		vertex.Position = vector;
 
 		// normals
-		vector.x = mesh->mNormals[i].x;
+/*		vector.x = mesh->mNormals[i].x;
 		vector.y = mesh->mNormals[i].y;
 		vector.z = mesh->mNormals[i].z;
-		vertex.Normal = vector;
+		vertex.Normal = vector;*/
+
 
 		// texture coordinates
 		if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
@@ -83,6 +88,8 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
 		else {
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 		}
+
+		vertices.push_back(vertex);
 	}
 
 	// now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
@@ -136,22 +143,6 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
 			textures.push_back(texture);
 			textures_loaded.push_back(texture); // add to loaded textures
 		}
-	}
-	return textures;
-}
-
-std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
-{
-	std::vector<Texture> textures;
-	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-	{
-		aiString str;
-		mat->GetTexture(type, i, &str);
-		Texture texture;
-		texture.id = TextureFromFile(str.C_Str(), directory);
-		texture.type = typeName;
-		texture.path = str;
-		textures.push_back(texture);
 	}
 	return textures;
 }

@@ -32,6 +32,7 @@ public:
 	std::vector<Texture> textures;
 	/*  Functions  */
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	Mesh::~Mesh();
 	void draw(GLuint shader);
 private:
 	/*  Render data  */

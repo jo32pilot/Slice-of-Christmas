@@ -5,8 +5,18 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	this->vertices = vertices;
 	this->indices = indices;
 	this->textures = textures;
+	std::cout << "Num Vertices: " << vertices.size() << std::endl;
+	std::cout << "Num Indices: " << indices.size() << std::endl;
+	std::cout << "Num Textures: " << textures.size() << std::endl;
+	std::cout << std::endl;
 
 	setupMesh();
+}
+
+Mesh::~Mesh() {
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &VAO);
 }
 
 void Mesh::setupMesh()
@@ -53,6 +63,7 @@ void Mesh::draw(GLuint shader)
 			number = std::to_string(specularNr++);
 
 		const char* uniform = ("material." + name + number).c_str();
+		//std::cout << name + number << std::endl;
 		glUniform1f(glGetUniformLocation(shader, uniform), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}

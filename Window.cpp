@@ -107,6 +107,12 @@ bool Window::initializeObjects()
 	tree = new Model("assets/christmas-tree/CartoonTree.obj");
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 
+	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
+	glm::vec3 cottageMin = cottage->getSmallestCoord();
+	glm::vec3 treeMin = tree->getSmallestCoord();
+	cottage->setModel(glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0)) * cottage->getModel());
+	tree->setModel(glm::translate(glm::vec3(0, terrainHeight - treeMin.y, 0)) * tree->getModel());
+
 	return true;
 }
 
@@ -209,10 +215,10 @@ void Window::idleCallback()
 	eye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
 	// Maybe switch parameters?
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
-	if (eye[1] < terrainHeight) {
+	if (eye[1] < terrainHeight + PLAYER_HEIGHT) {
 		inAir = false;
 		upwardsSpeed = 0;
-		eye[1] = terrainHeight;
+		eye[1] = terrainHeight + PLAYER_HEIGHT;
 	}
 }
 
@@ -237,19 +243,24 @@ void Window::displayCallback(GLFWwindow* window)
 	terrain->draw(terrainTexture);
 
 	// Draw skybox
-	/*glDepthMask(GL_FALSE);
+	glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgram);
 	glUniformMatrix4fv(skyboxProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-	skybox->draw(textureID);*/
+	skybox->draw(textureID);
+
+	glDisable(GL_CULL_FACE);
 
 	glUseProgram(importedProgram);
 	glUniformMatrix4fv(importedProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(importedViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 
-	cottage->Draw(importedProgram);
+	tree->draw(importedProgram);
+
+	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottage->getModel()));
+	cottage->draw(importedProgram);
 
 	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
 	// Gets events, including input such as keyboard and mouse or window resizing.

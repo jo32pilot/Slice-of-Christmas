@@ -21,7 +21,7 @@
 #include "shader.h"
 #include "Cube.h"
 #include "loadBox.h"
-#include "Model.h"
+#include "Model.hpp"
 
 #define WALK_SPEED 200.0f
 #define CENTER_DIVIDER 2

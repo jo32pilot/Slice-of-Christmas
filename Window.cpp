@@ -17,7 +17,7 @@ std::vector<Model*> Window::models;
 
 glm::mat4 Window::projection; // Projection matrix.
 
-glm::vec3 Window::eye(0, 0, 3); // Camera position.
+glm::vec3 Window::eye(-500, 0, 3); // Camera position.
 glm::vec3 Window::center(0, 0, -1); // The point we are looking at.
 glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
 
@@ -70,6 +70,7 @@ GLuint Window::terrainTexture;
 GLfloat Window::upwardsSpeed = 0;
 GLboolean Window::inAir = false;
 GLboolean Window::debugBounds = false;
+PlayerBound Window::p1 = {1.0f, eye};
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -120,7 +121,10 @@ bool Window::initializeObjects()
 {
 	skybox = new Cube(5.0f);
 	terrain = new Terrain();
-	tree = new Model("assets/christmas-tree/CartoonTree.obj");
+	//tree = new Model("assets/christmas-tree/CartoonTree.obj");
+	std::cout << "before tree load" << std::endl;
+	tree = new Model("assets/test_tree/Models/TreeDecorated.fbx");
+	std::cout << "after tree load" << std::endl;
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 	sphere = new Model("assets/sphere.obj");
 
@@ -129,14 +133,19 @@ bool Window::initializeObjects()
 	models.push_back(tree);
 	models.push_back(cottage);
 
+
 	cottage->boundingSphere = sphere;
 	tree->boundingSphere = sphere;
 
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
 	glm::vec3 cottageMin = cottage->getSmallestCoord();
 	glm::vec3 treeMin = tree->getSmallestCoord();
-	cottage->setModel(glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0)) * cottage->getModel());
-	tree->setModel(glm::translate(glm::vec3(0, terrainHeight - treeMin.y, 0)) * tree->getModel());
+	glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
+	glm::mat4 treeMove = glm::translate(glm::vec3(0, terrainHeight - treeMin.y, 0));
+	cottage->setModel(cottageMove * cottage->getModel());
+	cottage->updateMembers(cottageMove);
+	tree->setModel(treeMove * tree->getModel());
+	tree->updateMembers(treeMove);
 
 	return true;
 }
@@ -239,7 +248,10 @@ void Window::idleCallback()
 	
 	// Gravity to pull camera down
 	upwardsSpeed += (GRAVITY * deltaTime);
-	eye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
+	glm::vec3 movedEye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
+	if (!assertPlayerCollision(movedEye)) {
+		eye = movedEye;
+	}
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
 	if (eye[1] < terrainHeight + PLAYER_HEIGHT) {
 		inAir = false;
@@ -265,8 +277,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
 
-	//terrain->draw();
-	terrain->draw(terrainTexture);
+	//terrain->draw(terrainTexture);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);
@@ -286,7 +297,7 @@ void Window::displayCallback(GLFWwindow* window)
 	tree->draw(importedProgram);
 
 	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottage->getModel()));
-	cottage->draw(importedProgram);
+	//cottage->draw(importedProgram);
 
 	if (debugBounds) {
 		glUseProgram(noTexProgram);
@@ -303,6 +314,7 @@ void Window::displayCallback(GLFWwindow* window)
 	}
 
 	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
+	p1.center = eye;
 	// Gets events, including input such as keyboard and mouse or window resizing.
 	glfwPollEvents();
 	// Swap buffers.
@@ -338,33 +350,33 @@ void Window::processInput(GLFWwindow *window)
 	GLfloat systemWalkSpeed = WALK_SPEED * deltaTime;
 
 	// Current means of preventing player from going outside 
-	// of skybox restricts player too much. Fix later.
+	// of skybox restricts player movement too much. Fix later.
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		// So moving doesn't cause jumping
 		glm::vec3 newPos = systemWalkSpeed * center;
 		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
-		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye += glm::vec3(newPos[0], 0, newPos[2]);
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		glm::vec3 newPos = systemWalkSpeed * center;
 		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
-		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye -= glm::vec3(newPos[0], 0, newPos[2]);
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
-		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye = movedEye;
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
-		if (movedEye[0] < SKYBOX_SIZE - 1 && movedEye[0] > -SKYBOX_SIZE + 1 && movedEye[2] < SKYBOX_SIZE - 1 && movedEye[2] > -SKYBOX_SIZE + 1) {
+		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye = movedEye;
 		}
 	}
@@ -427,4 +439,28 @@ void Window::setDeltaTime() {
 	float currentFrame = glfwGetTime();
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
+}
+
+GLboolean Window::assertInSkybox(glm::vec3 movedEye) {
+	if (movedEye[0] < SKYBOX_SIZE - 1 && 
+			movedEye[0] > -SKYBOX_SIZE + 1 && 
+			movedEye[2] < SKYBOX_SIZE - 1 && 
+			movedEye[2] > -SKYBOX_SIZE + 1) {
+		return true;
+	}
+	return false;
+}
+
+/*
+* Currently only checks against player, will need to check for other moving
+* things as well.
+*/
+GLboolean Window::assertPlayerCollision(glm::vec3 movedEye) {
+	for (int i = 0; i < models.size(); ++i) {
+		GLfloat dist = glm::distance(movedEye, models[i]->getTrueCenter());
+		if (dist <= p1.radius + models[i]->getRadius()) {
+			return true;
+		}
+	}
+	return false;
 }

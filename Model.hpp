@@ -19,14 +19,16 @@ public:
 	std::vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
 	std::vector<Mesh> meshes;
 	std::string directory;
+	Model* boundingSphere;
+	bool gammaCorrection;
+
 	glm::vec3 color;
 	glm::vec3 largestCoord;
 	glm::vec3 smallestCoord;
 	glm::vec3 midCoord;
+	glm::vec3 trueCenter;
 	glm::mat4 model;
 	GLfloat radius;
-	Model* boundingSphere;
-	bool gammaCorrection;
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
@@ -37,8 +39,8 @@ public:
 		loadModel(path);
 		midCoord = (largestCoord + smallestCoord);
 		this->midCoord /= MID_POINT_DIVISOR;
+		this->trueCenter = midCoord;
 		this->radius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
-		std::cout << radius << std::endl;
 	}
 
 	// draws the model, and thus all its meshes
@@ -67,12 +69,25 @@ public:
 		return this->midCoord;
 	}
 
+	glm::vec3 getTrueCenter() {
+		return this->trueCenter;
+	}
+
 	glm::mat4 getModel() {
 		return this->model;
 	}
 
 	void setModel(glm::mat4 newModel) {
+		
 		this->model = newModel;
+	}
+
+	void updateMembers(glm::mat4 newModel) {
+
+		this->largestCoord = newModel * glm::vec4(this->largestCoord, 1.0f);
+		this->smallestCoord = newModel * glm::vec4(this->smallestCoord, 1.0f);		
+		this->radius = glm::distance(this->largestCoord, this->smallestCoord) / DIAMETER_TO_RADIUS;
+		this->trueCenter = newModel * glm::vec4(this->trueCenter, 1.0f);
 	}
 
 	glm::vec3 getColor() {

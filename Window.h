@@ -21,6 +21,7 @@
 #include "shader.h"
 #include "Cube.h"
 #include "loadBox.h"
+#include "PlayerBound.h"
 #include "Model.hpp"
 
 #define WALK_SPEED 200.0f
@@ -62,6 +63,7 @@ public:
 	static Model* sphere;
 	static GLboolean debugBounds;
 	static std::vector<Model*> models;
+	static PlayerBound p1;
 
 	static bool initializeProgram();
 	static bool initializeObjects();
@@ -75,6 +77,8 @@ public:
 	static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	static void setDeltaTime();
+	static GLboolean assertInSkybox(glm::vec3 movedEye);
+	static GLboolean assertPlayerCollision(glm::vec3 movedEye);
 
 };
 

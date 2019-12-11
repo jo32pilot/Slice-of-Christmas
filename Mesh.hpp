@@ -43,7 +43,9 @@ public:
 		this->vertices = vertices;
 		this->indices = indices;
 		this->textures = textures;
-		
+		std::cout << vertices.size() << std::endl;
+		std::cout << textures.size() << std::endl;
+
 		// now that we have all the required data, set the vertex buffers and its attribute pointers.
 		setupMesh();
 	}

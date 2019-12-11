@@ -129,6 +129,8 @@
     <None Include="packages.config" />
     <None Include="shaders\imported.frag" />
     <None Include="shaders\imported.vert" />
+    <None Include="shaders\material.frag" />
+    <None Include="shaders\material.vert" />
     <None Include="shaders\no_texture.frag" />
     <None Include="shaders\no_texture.vert" />
     <None Include="shaders\shader.frag" />

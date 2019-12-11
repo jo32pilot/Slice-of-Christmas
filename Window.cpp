@@ -46,6 +46,11 @@ GLuint Window::noTexViewLoc;
 GLuint Window::noTexModelLoc;
 GLuint Window::noTexColorLoc;
 
+GLuint Window::materialProgram;
+GLuint Window::materialProjectionLoc;
+GLuint Window::materialViewLoc;
+GLuint Window::materialModelLoc;
+
 GLuint Window::textureID;
 
 std::vector<std::string> Window::faces = {
@@ -78,7 +83,7 @@ bool Window::initializeProgram() {
 	skyboxProgram = LoadShaders("shaders/skybox.vert", "shaders/skybox.frag");
 	importedProgram = LoadShaders("shaders/imported.vert", "shaders/imported.frag");
 	noTexProgram = LoadShaders("shaders/no_texture.vert", "shaders/no_texture.frag");
-
+	materialProgram = LoadShaders("shaders/material.vert", "shaders/material.frag");
 
 	// Check the shader program.
 	if (!program)
@@ -111,6 +116,11 @@ bool Window::initializeProgram() {
 	noTexModelLoc = glGetUniformLocation(noTexProgram, "model");
 	noTexColorLoc = glGetUniformLocation(noTexProgram, "color");
 
+	glUseProgram(materialProgram);
+	materialProjectionLoc = glGetUniformLocation(materialProgram, "projection");
+	materialViewLoc = glGetUniformLocation(materialProgram, "view");
+	materialModelLoc = glGetUniformLocation(materialProgram, "model");
+
 	textureID = loadBox(faces);
 	terrainTexture = loadTextures("assets/terrainTexture.png");
 
@@ -123,7 +133,7 @@ bool Window::initializeObjects()
 	terrain = new Terrain();
 	//tree = new Model("assets/christmas-tree/CartoonTree.obj");
 	std::cout << "before tree load" << std::endl;
-	tree = new Model("assets/test_tree/Models/TreeDecorated.fbx");
+	tree = new Model("assets/test_tree/ChristmasTree.obj");
 	std::cout << "after tree load" << std::endl;
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 	sphere = new Model("assets/sphere.obj");
@@ -164,6 +174,7 @@ void Window::cleanUp()
 	glDeleteProgram(skyboxProgram);
 	glDeleteProgram(importedProgram);
 	glDeleteProgram(noTexProgram);
+	glDeleteProgram(materialProgram);
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -289,14 +300,24 @@ void Window::displayCallback(GLFWwindow* window)
 
 	glDisable(GL_CULL_FACE);
 
+	glUseProgram(materialProgram);
+	glUniformMatrix4fv(materialProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(materialViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(materialModelLoc, 1, GL_FALSE, glm::value_ptr(tree->getModel() * glm::scale(glm::vec3(200))));
+	glm::vec3 lightColor = glm::vec3(1.0f);
+	glUniform3fv(glGetUniformLocation(materialProgram, "viewPos"), 1, glm::value_ptr(eye));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(glm::vec3(100)));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.ambient"), 1, glm::value_ptr(lightColor));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.diffuse"), 1, glm::value_ptr(lightColor));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.specular"), 1, glm::value_ptr(lightColor));
+
+	tree->draw(materialProgram);
+
 	glUseProgram(importedProgram);
 	glUniformMatrix4fv(importedProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(importedViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-
-	tree->draw(importedProgram);
-
 	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottage->getModel()));
+
 	//cottage->draw(importedProgram);
 
 	if (debugBounds) {

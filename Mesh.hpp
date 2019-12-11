@@ -27,6 +27,13 @@ struct Texture {
 	std::string path;
 };
 
+struct Material {
+	glm::vec3 Diffuse;
+	glm::vec3 Specular;
+	glm::vec3 Ambient;
+	float Shininess;
+};
+
 class Mesh {
 public:
 
@@ -34,6 +41,7 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
+	Material material;
 	unsigned int VAO;
 
 	/*  Functions  */
@@ -44,14 +52,25 @@ public:
 		this->indices = indices;
 		this->textures = textures;
 		std::cout << vertices.size() << std::endl;
+		std::cout << indices.size() << std::endl;
 		std::cout << textures.size() << std::endl;
+		std::cout << std::endl;
 
 		// now that we have all the required data, set the vertex buffers and its attribute pointers.
 		setupMesh();
 	}
 
+	// For models without textures
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, Material material){
+		this->vertices = vertices;
+		this->indices = indices;
+		this->material = material;
+
+		setupMesh();
+	}
+
 	// render the mesh
-	void draw(GLuint shader)
+	void draw(GLuint shader, bool hasTextures)
 	{
 		// bind appropriate textures
 		unsigned int diffuseNr = 1;
@@ -77,6 +96,14 @@ public:
 			glUniform1i(glGetUniformLocation(shader, (name + number).c_str()), i);
 			// and finally bind the texture
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
+		}
+
+		// In the future check if material exists as well.
+		if (!hasTextures) {
+			glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, glm::value_ptr(material.Ambient));
+			glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, glm::value_ptr(material.Diffuse));
+			glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, glm::value_ptr(material.Specular));
+			glUniform1f(glGetUniformLocation(shader, "material.shininess"), material.Shininess);
 		}
 
 		// draw mesh

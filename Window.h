@@ -44,6 +44,7 @@ public:
 	static GLuint skyboxProgram, skyboxProjectionLoc, skyboxViewLoc;
 	static GLuint importedProgram, importedProjectionLoc, importedViewLoc, importedModelLoc;
 	static GLuint noTexProgram, noTexProjectionLoc, noTexViewLoc, noTexModelLoc, noTexColorLoc;
+	static GLuint materialProgram, materialProjectionLoc, materialViewLoc, materialModelLoc;
 	static GLuint textureID;
 	static Cube* skybox;
 	static std::vector<std::string> faces;

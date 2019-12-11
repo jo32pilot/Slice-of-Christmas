@@ -43,6 +43,7 @@ public:
 		this->midCoord /= MID_POINT_DIVISOR;
 		this->trueCenter = midCoord;
 		this->radius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
+		this->collisionRadius = radius;
 	}
 
 	// draws the model, and thus all its meshes
@@ -86,6 +87,10 @@ public:
 
 	void updateCenter(glm::mat4 transformation) {
 		this->trueCenter = transformation * glm::vec4(this->trueCenter, 1.0f);
+	}
+
+	void updateMidCoord(glm::mat4 transformation) {
+		this->midCoord = transformation * glm::vec4(this->midCoord, 1.0f);
 	}
 
 	void updateMembersScale(glm::mat4 scale) {

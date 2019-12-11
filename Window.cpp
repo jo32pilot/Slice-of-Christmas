@@ -87,6 +87,8 @@ std::vector<glm::vec3> Window::cottagePlacements = {
 	{-200, 0, -900},
 	{-300, 0, -400}
 };
+std::vector<glm::mat4> Window::cottageMovements;
+
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -149,8 +151,6 @@ bool Window::initializeObjects()
 	sphere->setColor(glm::vec3(1, 0, 1));
 
 	models.push_back(tree);
-	models.push_back(cottage);
-
 
 	cottage->boundingSphere = sphere;
 	tree->boundingSphere = sphere;
@@ -158,11 +158,33 @@ bool Window::initializeObjects()
 	// Set up tree
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
 	glm::vec3 treeMin = tree->getSmallestCoord();
-	glm::mat4 treeMove = glm::translate(glm::vec3(0, terrainHeight - treeMin.y, 0));
+	glm::mat4 treeMove = glm::translate(glm::vec3(0, terrainHeight - treeMin.y - FLOOR_OFFSET, 0));
 	glm::mat4 treeScale = glm::scale(glm::vec3(TREE_SIZE));
 	tree->setModel(treeMove * tree->getModel() * treeScale);
 	tree->updateMembersScale(treeScale);
 	tree->updateCenter(treeMove);
+
+	// Create translation matrices for each cottage and store for collision 
+	// detection later.
+	for (int i = 0; i < cottagePlacements.size(); ++i) {
+		glm::vec3 place = cottagePlacements[i];
+		glm::vec3 cottageMin = cottage->getSmallestCoord();
+		glm::mat4 placeCottage = glm::translate(place);
+		GLfloat terrainHeight = terrain->getHeightOfTerrain(place.x, place.z);
+		glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
+		glm::mat4 totalMovement = placeCottage * cottageMove;
+		cottageMovements.push_back(totalMovement);
+	}
+
+	for (int i = 0; i < cottageMovements.size(); ++i) {
+		for (int j = 0; j < 4; ++j) {
+			for (int k = 0; k < 4; ++k) {
+				std::cout << cottageMovements[i][j][k] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
 
 	return true;
 }
@@ -258,7 +280,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 	// Set the projection matrix.
 	Window::projection = glm::perspective(glm::radians(fov), 
-		double(width) / (double)height, 1.0, 1000.0);
+		double(width) / (double)height, 1.0, 2250.0);
 }
 
 void Window::idleCallback()
@@ -323,17 +345,9 @@ void Window::displayCallback(GLFWwindow* window)
 	glUseProgram(importedProgram);
 	glUniformMatrix4fv(importedProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(importedViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	for (int i = 0; i < cottagePlacements.size(); ++i) {
+	for (int i = 0; i < cottageMovements.size(); ++i) {
 
-		glm::vec3 place = cottagePlacements[i];
-		glm::vec3 cottageMin = cottage->getSmallestCoord();
-		glm::mat4 placeCottage = glm::translate(place);
-		GLfloat terrainHeight = terrain->getHeightOfTerrain(place.x, place.z);
-		glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
-		glm::mat4 totalMovement = placeCottage * cottageMove;
-
-
-		glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(totalMovement * cottage->getModel()));
+		glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottageMovements[i] * cottage->getModel()));
 		cottage->draw(importedProgram);
 	}
 
@@ -342,6 +356,14 @@ void Window::displayCallback(GLFWwindow* window)
 		glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
+		for (int i = 0; i < cottageMovements.size(); ++i) {
+			glm::mat4 place = cottageMovements[i];
+			glm::mat4 center = glm::translate(cottage->getMidCoord());
+			glm::mat4 scale = glm::scale(glm::vec3(cottage->getRadius()));
+			glm::mat4 sphereModel = place * center * cottage->getModel() * scale;
+			glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
+			cottage->drawBound();
+		}
 		for (int i = 0; i < models.size(); ++i) {
 			glm::mat4 center = glm::translate(models[i]->getMidCoord());
 			glm::mat4 scale = glm::scale(glm::vec3(models[i]->getRadius()));
@@ -470,7 +492,7 @@ void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 		fov = 45.0f;
 	}
 	Window::projection = glm::perspective(glm::radians(fov),
-		double(width) / (double)height, 1.0, 1000.0);
+		double(width) / (double)height, 1.0, 2250.0);
 }
 
 void Window::setDeltaTime() {
@@ -494,6 +516,13 @@ GLboolean Window::assertInSkybox(glm::vec3 movedEye) {
 * things as well.
 */
 GLboolean Window::assertPlayerCollision(glm::vec3 movedEye) {
+	for (int i = 0; i < cottageMovements.size(); ++i) {
+		GLfloat dist = glm::distance(movedEye, 
+				glm::vec3(cottageMovements[i] * glm::vec4(cottage->getTrueCenter(), 1.0f)));
+		if (dist <= p1.radius + cottage->getCollisionRadius()) {
+			return true;
+		}
+	}
 	for (int i = 0; i < models.size(); ++i) {
 		GLfloat dist = glm::distance(movedEye, models[i]->getTrueCenter());
 		if (dist <= p1.radius + models[i]->getCollisionRadius()) {

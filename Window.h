@@ -31,6 +31,7 @@
 #define TERRAIN_HEIGHT 500
 #define TREE_SIZE 200
 #define PLAYER_HEIGHT 20
+#define FLOOR_OFFSET 50
 
 class Window
 {
@@ -67,6 +68,7 @@ public:
 	static std::vector<Model*> models;
 	static PlayerBound p1;
 	static std::vector<glm::vec3> cottagePlacements;
+	static std::vector<glm::mat4> cottageMovements;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

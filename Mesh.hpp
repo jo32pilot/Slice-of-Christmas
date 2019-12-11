@@ -86,6 +86,12 @@ public:
 		glActiveTexture(GL_TEXTURE0);
 	}
 
+	void drawBound() {
+		glBindVertexArray(VAO);
+		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
+
 private:
 	/*  Render data  */
 	unsigned int VBO, EBO;

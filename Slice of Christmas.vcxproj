@@ -128,6 +128,8 @@
     <None Include="packages.config" />
     <None Include="shaders\imported.frag" />
     <None Include="shaders\imported.vert" />
+    <None Include="shaders\no_texture.frag" />
+    <None Include="shaders\no_texture.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\skybox.frag" />

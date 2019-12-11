@@ -9,31 +9,50 @@
 #include "loadBox.h"
 #include "Mesh.hpp"
 
-class Model : public Object
+#define MID_POINT_DIVISOR 2
+#define DIAMETER_TO_RADIUS 2
+
+class Model
 {
 public:
 	/*  Model Data */
 	std::vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
 	std::vector<Mesh> meshes;
 	std::string directory;
+	glm::vec3 color;
 	glm::vec3 largestCoord;
 	glm::vec3 smallestCoord;
+	glm::vec3 midCoord;
+	glm::mat4 model;
+	GLfloat radius;
+	Model* boundingSphere;
 	bool gammaCorrection;
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
 	Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma)
 	{
-		largestSmallestInit = false;
+		this->largestSmallestInit = false;
 		this->model = glm::mat4(1.0f);
 		loadModel(path);
+		midCoord = (largestCoord + smallestCoord);
+		this->midCoord /= MID_POINT_DIVISOR;
+		this->radius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
+		std::cout << radius << std::endl;
 	}
 
 	// draws the model, and thus all its meshes
 	void draw(GLuint shader)
 	{
-		for (unsigned int i = 0; i < meshes.size(); i++)
+		for (unsigned int i = 0; i < meshes.size(); i++) {
 			meshes[i].draw(shader);
+		}
+	}
+
+	void drawBound() {
+		for (int i = 0; i < boundingSphere->meshes.size(); ++i) {
+			boundingSphere->meshes[i].drawBound();
+		}
 	}
 
 	glm::vec3 getSmallestCoord() {
@@ -44,12 +63,29 @@ public:
 		return this->largestCoord;
 	}
 
+	glm::vec3 getMidCoord() {
+		return this->midCoord;
+	}
+
+	glm::mat4 getModel() {
+		return this->model;
+	}
+
 	void setModel(glm::mat4 newModel) {
 		this->model = newModel;
 	}
 
-	void draw() {}
-	void update() {}
+	glm::vec3 getColor() {
+		return this->color;
+	}
+
+	void setColor(glm::vec3 color) {
+		this->color = color;
+	}
+
+	GLfloat getRadius() {
+		return this->radius;
+	}
 
 private:
 

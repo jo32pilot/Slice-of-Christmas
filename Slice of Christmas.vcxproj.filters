@@ -101,5 +101,11 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="shaders\no_texture.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\no_texture.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

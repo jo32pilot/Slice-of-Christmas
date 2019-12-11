@@ -12,6 +12,8 @@ Cube* Window::skybox;
 Terrain* Window::terrain;
 Model* Window::tree;
 Model* Window::cottage;
+Model* Window::sphere;
+std::vector<Model*> Window::models;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -38,6 +40,12 @@ GLuint Window::importedProjectionLoc;
 GLuint Window::importedViewLoc;
 GLuint Window::importedModelLoc;
 
+GLuint Window::noTexProgram; 
+GLuint Window::noTexProjectionLoc;
+GLuint Window::noTexViewLoc; 
+GLuint Window::noTexModelLoc;
+GLuint Window::noTexColorLoc;
+
 GLuint Window::textureID;
 
 std::vector<std::string> Window::faces = {
@@ -61,12 +69,14 @@ GLboolean Window::normalColoring = false;
 GLuint Window::terrainTexture;
 GLfloat Window::upwardsSpeed = 0;
 GLboolean Window::inAir = false;
+GLboolean Window::debugBounds = false;
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
 	skyboxProgram = LoadShaders("shaders/skybox.vert", "shaders/skybox.frag");
 	importedProgram = LoadShaders("shaders/imported.vert", "shaders/imported.frag");
+	noTexProgram = LoadShaders("shaders/no_texture.vert", "shaders/no_texture.frag");
 
 
 	// Check the shader program.
@@ -94,6 +104,12 @@ bool Window::initializeProgram() {
 	importedViewLoc = glGetUniformLocation(importedProgram, "view");
 	importedModelLoc = glGetUniformLocation(importedProgram, "model");
 
+	glUseProgram(noTexProgram);
+	noTexProjectionLoc = glGetUniformLocation(noTexProgram, "projection");
+	noTexViewLoc = glGetUniformLocation(noTexProgram, "view");
+	noTexModelLoc = glGetUniformLocation(noTexProgram, "model");
+	noTexColorLoc = glGetUniformLocation(noTexProgram, "color");
+
 	textureID = loadBox(faces);
 	terrainTexture = loadTextures("assets/terrainTexture.png");
 
@@ -106,6 +122,15 @@ bool Window::initializeObjects()
 	terrain = new Terrain();
 	tree = new Model("assets/christmas-tree/CartoonTree.obj");
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
+	sphere = new Model("assets/sphere.obj");
+
+	sphere->setColor(glm::vec3(1, 0, 1));
+
+	models.push_back(tree);
+	models.push_back(cottage);
+
+	cottage->boundingSphere = sphere;
+	tree->boundingSphere = sphere;
 
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
 	glm::vec3 cottageMin = cottage->getSmallestCoord();
@@ -123,11 +148,13 @@ void Window::cleanUp()
 	delete terrain;
 	delete tree;
 	delete cottage;
+	delete sphere;
 
 	// Delete the shader program.
 	glDeleteProgram(program);
 	glDeleteProgram(skyboxProgram);
 	glDeleteProgram(importedProgram);
+	glDeleteProgram(noTexProgram);
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -213,7 +240,6 @@ void Window::idleCallback()
 	// Gravity to pull camera down
 	upwardsSpeed += (GRAVITY * deltaTime);
 	eye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
-	// Maybe switch parameters?
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
 	if (eye[1] < terrainHeight + PLAYER_HEIGHT) {
 		inAir = false;
@@ -262,6 +288,20 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottage->getModel()));
 	cottage->draw(importedProgram);
 
+	if (debugBounds) {
+		glUseProgram(noTexProgram);
+		glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
+		for (int i = 0; i < models.size(); ++i) {
+			glm::mat4 center = glm::translate(models[i]->getMidCoord());
+			glm::mat4 scale = glm::scale(glm::vec3(models[i]->getRadius()));
+			glm::mat4 sphereModel = center * models[i]->getModel() * scale;
+			glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
+			models[i]->drawBound();
+		}
+	}
+
 	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);
 	// Gets events, including input such as keyboard and mouse or window resizing.
 	glfwPollEvents();
@@ -284,6 +324,8 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 		case GLFW_KEY_N:
 			normalColoring = !normalColoring;
 			break;
+		case GLFW_KEY_B:
+			debugBounds = !debugBounds;
 		default:
 			break;
 		}

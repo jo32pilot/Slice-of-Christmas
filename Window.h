@@ -42,6 +42,7 @@ public:
 	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc, normalColoringLoc;
 	static GLuint skyboxProgram, skyboxProjectionLoc, skyboxViewLoc;
 	static GLuint importedProgram, importedProjectionLoc, importedViewLoc, importedModelLoc;
+	static GLuint noTexProgram, noTexProjectionLoc, noTexViewLoc, noTexModelLoc, noTexColorLoc;
 	static GLuint textureID;
 	static Cube* skybox;
 	static std::vector<std::string> faces;
@@ -58,6 +59,9 @@ public:
 	static GLboolean inAir;
 	static Model* tree;
 	static Model* cottage;
+	static Model* sphere;
+	static GLboolean debugBounds;
+	static std::vector<Model*> models;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

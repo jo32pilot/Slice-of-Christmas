@@ -29,7 +29,8 @@ public:
 	glm::vec3 midCoord;
 	glm::vec3 trueCenter;
 	glm::mat4 model;
-	GLfloat radius;
+	GLfloat radius; // Used just to scale the viewable bounding sphere
+	GLfloat collisionRadius; // Used to detect collisions
 
 	/*  Functions   */
 	// constructor, expects a filepath to a 3D model.
@@ -83,12 +84,21 @@ public:
 		this->model = newModel;
 	}
 
-	void updateMembers(glm::mat4 newModel) {
+	void updateCenter(glm::mat4 transformation) {
+		this->trueCenter = transformation * glm::vec4(this->trueCenter, 1.0f);
+	}
 
-		this->largestCoord = newModel * glm::vec4(this->largestCoord, 1.0f);
-		this->smallestCoord = newModel * glm::vec4(this->smallestCoord, 1.0f);		
-		this->radius = glm::distance(this->largestCoord, this->smallestCoord) / DIAMETER_TO_RADIUS;
-		this->trueCenter = newModel * glm::vec4(this->trueCenter, 1.0f);
+	void updateMembersScale(glm::mat4 scale) {
+		this->midCoord = scale * glm::vec4(this->midCoord, 1.0f);
+		this->trueCenter = scale * glm::vec4(this->trueCenter, 1.0f);
+		largestCoord = scale * glm::vec4(this->largestCoord, 1.0f);
+		smallestCoord = scale * glm::vec4(this->smallestCoord, 1.0f);
+		this->collisionRadius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
+
+	}
+
+	GLfloat getCollisionRadius() {
+		return collisionRadius;
 	}
 
 	glm::vec3 getColor() {
@@ -263,7 +273,6 @@ private:
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
 		if (textures.size() == 0) {
-			std::cout << "returning material" << std::endl;
 			return Mesh(vertices, indices, loadMaterial(material));
 		}
 		else {

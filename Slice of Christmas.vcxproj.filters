@@ -83,6 +83,9 @@
     <ClInclude Include="PlayerBound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="printVec3.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.frag">

@@ -120,6 +120,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="PlayerBound.h" />
     <ClInclude Include="PointCloud.h" />
+    <ClInclude Include="printVec3.hpp" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Terrain.h" />

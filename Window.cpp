@@ -76,6 +76,17 @@ GLfloat Window::upwardsSpeed = 0;
 GLboolean Window::inAir = false;
 GLboolean Window::debugBounds = false;
 PlayerBound Window::p1 = {1.0f, eye};
+std::vector<glm::vec3> Window::cottagePlacements = {
+	{200, 0, 300},
+	{700, 0, 0},
+	{-500, 0, -700},
+	{400, 0, 200},
+	{100, 0, -1000},
+	{250, 0, 750},
+	{750, 0, 750},
+	{-200, 0, -900},
+	{-300, 0, -400}
+};
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -122,7 +133,7 @@ bool Window::initializeProgram() {
 	materialModelLoc = glGetUniformLocation(materialProgram, "model");
 
 	textureID = loadBox(faces);
-	terrainTexture = loadTextures("assets/terrainTexture.png");
+	terrainTexture = loadTextures("assets/snow_floor.jpg");
 
 	return true;
 }
@@ -131,10 +142,7 @@ bool Window::initializeObjects()
 {
 	skybox = new Cube(5.0f);
 	terrain = new Terrain();
-	//tree = new Model("assets/christmas-tree/CartoonTree.obj");
-	std::cout << "before tree load" << std::endl;
 	tree = new Model("assets/test_tree/ChristmasTree.obj");
-	std::cout << "after tree load" << std::endl;
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 	sphere = new Model("assets/sphere.obj");
 
@@ -147,15 +155,14 @@ bool Window::initializeObjects()
 	cottage->boundingSphere = sphere;
 	tree->boundingSphere = sphere;
 
+	// Set up tree
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
-	glm::vec3 cottageMin = cottage->getSmallestCoord();
 	glm::vec3 treeMin = tree->getSmallestCoord();
-	glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
 	glm::mat4 treeMove = glm::translate(glm::vec3(0, terrainHeight - treeMin.y, 0));
-	cottage->setModel(cottageMove * cottage->getModel());
-	cottage->updateMembers(cottageMove);
-	tree->setModel(treeMove * tree->getModel());
-	tree->updateMembers(treeMove);
+	glm::mat4 treeScale = glm::scale(glm::vec3(TREE_SIZE));
+	tree->setModel(treeMove * tree->getModel() * treeScale);
+	tree->updateMembersScale(treeScale);
+	tree->updateCenter(treeMove);
 
 	return true;
 }
@@ -281,44 +288,54 @@ void Window::displayCallback(GLFWwindow* window)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+	// Draw terrain
 	glUseProgram(program);
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(terrain->getModel()));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
-
-	//terrain->draw(terrainTexture);
+	terrain->draw(terrainTexture);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);
 	glUseProgram(skyboxProgram);
 	glUniformMatrix4fv(skyboxProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(skyboxViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
 	skybox->draw(textureID);
 
 	glDisable(GL_CULL_FACE);
 
+	// Draw tree
 	glUseProgram(materialProgram);
 	glUniformMatrix4fv(materialProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(materialViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(materialModelLoc, 1, GL_FALSE, glm::value_ptr(tree->getModel() * glm::scale(glm::vec3(200))));
+	glUniformMatrix4fv(materialModelLoc, 1, GL_FALSE, glm::value_ptr(tree->getModel()));
 	glm::vec3 lightColor = glm::vec3(1.0f);
 	glUniform3fv(glGetUniformLocation(materialProgram, "viewPos"), 1, glm::value_ptr(eye));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(glm::vec3(100)));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.ambient"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.diffuse"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.specular"), 1, glm::value_ptr(lightColor));
-
 	tree->draw(materialProgram);
 
+	// Draw cottages
 	glUseProgram(importedProgram);
 	glUniformMatrix4fv(importedProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(importedViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(cottage->getModel()));
+	for (int i = 0; i < cottagePlacements.size(); ++i) {
 
-	//cottage->draw(importedProgram);
+		glm::vec3 place = cottagePlacements[i];
+		glm::vec3 cottageMin = cottage->getSmallestCoord();
+		glm::mat4 placeCottage = glm::translate(place);
+		GLfloat terrainHeight = terrain->getHeightOfTerrain(place.x, place.z);
+		glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
+		glm::mat4 totalMovement = placeCottage * cottageMove;
+
+
+		glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(totalMovement * cottage->getModel()));
+		cottage->draw(importedProgram);
+	}
 
 	if (debugBounds) {
 		glUseProgram(noTexProgram);
@@ -479,7 +496,7 @@ GLboolean Window::assertInSkybox(glm::vec3 movedEye) {
 GLboolean Window::assertPlayerCollision(glm::vec3 movedEye) {
 	for (int i = 0; i < models.size(); ++i) {
 		GLfloat dist = glm::distance(movedEye, models[i]->getTrueCenter());
-		if (dist <= p1.radius + models[i]->getRadius()) {
+		if (dist <= p1.radius + models[i]->getCollisionRadius()) {
 			return true;
 		}
 	}

@@ -29,6 +29,7 @@
 #define GRAVITY -300
 #define JUMP_POWER 100
 #define TERRAIN_HEIGHT 500
+#define TREE_SIZE 200
 #define PLAYER_HEIGHT 20
 
 class Window
@@ -65,6 +66,7 @@ public:
 	static GLboolean debugBounds;
 	static std::vector<Model*> models;
 	static PlayerBound p1;
+	static std::vector<glm::vec3> cottagePlacements;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

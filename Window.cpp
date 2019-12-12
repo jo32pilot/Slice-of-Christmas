@@ -13,8 +13,8 @@ Terrain* Window::terrain;
 Model* Window::tree;
 Model* Window::cottage;
 Model* Window::sphere;
+Model* Window::enemy;
 std::vector<Model*> Window::models;
-Robot* Window::robot;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -90,7 +90,6 @@ std::vector<glm::vec3> Window::cottagePlacements = {
 };
 std::vector<glm::mat4> Window::cottageMovements;
 
-
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
@@ -148,7 +147,7 @@ bool Window::initializeObjects()
 	tree = new Model("assets/test_tree/ChristmasTree.obj");
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 	sphere = new Model("assets/sphere.obj");
-	robot = new Robot("assets/robot/"); // Must have / at end to append file names
+	enemy = new Model("assets/enemy/source/untitled.fbx");
 
 	sphere->setColor(glm::vec3(1, 0, 1));
 
@@ -156,6 +155,7 @@ bool Window::initializeObjects()
 
 	cottage->boundingSphere = sphere;
 	tree->boundingSphere = sphere;
+	enemy->boundingSphere = sphere;
 
 	// Set up tree
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(0, 0);
@@ -172,11 +172,34 @@ bool Window::initializeObjects()
 		glm::vec3 place = cottagePlacements[i];
 		glm::vec3 cottageMin = cottage->getSmallestCoord();
 		glm::mat4 placeCottage = glm::translate(place);
-		GLfloat terrainHeight = terrain->getHeightOfTerrain(place.x, place.z);
+		terrainHeight = terrain->getHeightOfTerrain(place.x, place.z);
 		glm::mat4 cottageMove = glm::translate(glm::vec3(0, terrainHeight - cottageMin.y, 0));
 		glm::mat4 totalMovement = placeCottage * cottageMove;
 		cottageMovements.push_back(totalMovement);
 	}
+
+	// Transform enemy
+	
+	// rotate to get correct orientation of min, max, center points
+	glm::mat4 rotate = glm::rotate(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	enemy->updateMembersRotate(rotate);
+
+	// Get on right y level
+	glm::vec3 enemyMin = enemy->getSmallestCoord();
+	terrainHeight = terrain->getHeightOfTerrain(0, ENEMY_SPAWN_Z);
+	glm::mat4 enemyMove = glm::translate(glm::vec3(0, terrainHeight - enemyMin.y, 0));
+
+	glm::mat4 enemySpawn = enemyMove * glm::translate(glm::vec3(0, 0, ENEMY_SPAWN_Z));
+	glm::mat4 scale = glm::scale(glm::vec3(10));
+
+	enemy->setModel(enemySpawn * scale * rotate * enemy->getModel());
+	enemy->updateMembersScale(scale);
+	enemy->updateCenter(enemySpawn);
+
+	glm::vec3 min = enemy->getSmallestCoord();
+	glm::vec3 max = enemy->getLargestCoord();
+	glm::vec3 cent = enemy->getTrueCenter();
+	glm::vec3 mid = enemy->getMidCoord();
 
 	return true;
 }
@@ -189,7 +212,7 @@ void Window::cleanUp()
 	delete tree;
 	delete cottage;
 	delete sphere;
-	delete robot;
+	delete enemy;
 
 	// Delete the shader program.
 	glDeleteProgram(program);
@@ -278,7 +301,12 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	
+	GLfloat enemyFrameDist = ENEMY_SPEED * deltaTime;
+	glm::vec3 moveTowards = enemyFrameDist * glm::normalize(eye - enemy->getTrueCenter());
+	glm::mat4 move = glm::translate(moveTowards);
+	enemy->setModel(move * enemy->getModel());
+	enemy->updateCenter(move);
+
 	// Gravity to pull camera down
 	upwardsSpeed += (GRAVITY * deltaTime);
 	glm::vec3 movedEye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
@@ -292,6 +320,7 @@ void Window::idleCallback()
 		eye[1] = terrainHeight + PLAYER_HEIGHT;
 	}
 }
+
 
 void Window::displayCallback(GLFWwindow* window)
 {	
@@ -344,13 +373,14 @@ void Window::displayCallback(GLFWwindow* window)
 		cottage->draw(importedProgram);
 	}
 
-	glUseProgram(noTexProgram);
-	glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-	glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniform3fv(noTexColorLoc, 1, glm::value_ptr(robot->getColor()));
-	robot->draw(noTexProgram);
+	// Draw enemy
+	glUniformMatrix4fv(importedModelLoc, 1, GL_FALSE, glm::value_ptr(enemy->getModel()));
+	enemy->draw(importedProgram);
 
 	if (debugBounds) {
+		glUseProgram(noTexProgram);
+		glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
 		for (int i = 0; i < cottageMovements.size(); ++i) {
 			glm::mat4 place = cottageMovements[i];
@@ -367,6 +397,12 @@ void Window::displayCallback(GLFWwindow* window)
 			glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
 			models[i]->drawBound();
 		}
+		glm::mat4 center = glm::translate(enemy->getMidCoord());
+		glm::mat4 scale = glm::scale(glm::vec3(enemy->getRadius()));
+		glm::mat4 sphereModel = center * enemy->getModel() * scale;
+		glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
+		enemy->drawBound();
+
 	}
 
 	Window::view = glm::lookAt(Window::eye, Window::center + Window::eye, Window::up);

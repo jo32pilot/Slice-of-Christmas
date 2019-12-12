@@ -26,8 +26,8 @@ public:
 	glm::vec3 color;
 	glm::vec3 largestCoord;
 	glm::vec3 smallestCoord;
-	glm::vec3 midCoord;
-	glm::vec3 trueCenter;
+	glm::vec3 midCoord; // amount to move visible bounding sphere to center
+	glm::vec3 trueCenter; // Current center of model
 	glm::mat4 model;
 	GLfloat radius; // Used just to scale the viewable bounding sphere
 	GLfloat collisionRadius; // Used to detect collisions
@@ -39,7 +39,7 @@ public:
 		this->largestSmallestInit = false;
 		this->model = glm::mat4(1.0f);
 		loadModel(path);
-		midCoord = (largestCoord + smallestCoord);
+		this->midCoord = (largestCoord + smallestCoord);
 		this->midCoord /= MID_POINT_DIVISOR;
 		this->trueCenter = midCoord;
 		this->radius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
@@ -100,6 +100,19 @@ public:
 		smallestCoord = scale * glm::vec4(this->smallestCoord, 1.0f);
 		this->collisionRadius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
 
+	}
+
+	void updateMembersRotate(glm::mat4 rotate) {
+		largestCoord = smallestCoord = rotate * glm::vec4(meshes[0].vertices[0].Position, 1.0f);
+		for (int mesh = 0; mesh < meshes.size(); ++mesh) {
+			for (int vert = 0; vert < meshes[mesh].vertices.size(); ++vert) {
+				largestCoord = glm::max(largestCoord, glm::vec3(rotate * glm::vec4(meshes[mesh].vertices[vert].Position, 1.0f)));
+				smallestCoord = glm::min(smallestCoord, glm::vec3(rotate * glm::vec4(meshes[mesh].vertices[vert].Position, 1.0f)));
+			}
+		}
+		this->midCoord = (largestCoord + smallestCoord);
+		this->midCoord /= MID_POINT_DIVISOR;
+		this->trueCenter = midCoord;
 	}
 
 	GLfloat getCollisionRadius() {

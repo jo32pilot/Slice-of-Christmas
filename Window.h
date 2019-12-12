@@ -33,6 +33,8 @@
 #define TREE_SIZE 200
 #define PLAYER_HEIGHT 20
 #define FLOOR_OFFSET 50
+#define ENEMY_SPEED 175.0f
+#define ENEMY_SPAWN_Z -800
 
 class Window
 {
@@ -70,7 +72,7 @@ public:
 	static PlayerBound p1;
 	static std::vector<glm::vec3> cottagePlacements;
 	static std::vector<glm::mat4> cottageMovements;
-	static Robot* robot;
+	static Model* enemy;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

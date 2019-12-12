@@ -8,8 +8,10 @@
 #include "Model.hpp"
 
 #define PART_SIZE 7
-#define ARM_ALIGN 8
-
+#define ARM_ALIGN 9
+#define HEAD_ALIGN 8
+#define LEG_ALIGN_Y -10
+#define LEG_ALIGN_X 4
 
 class Robot {
 
@@ -17,7 +19,6 @@ class Robot {
 		Model* limb;
 		Model* head;
 		Model* body;
-		Model* eye;
 		glm::vec3 minCoord;
 		glm::vec3 maxCoord;
 		glm::vec3 midCoord;

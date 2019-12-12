@@ -64,6 +64,10 @@ public:
 		return this->smallestCoord;
 	}
 
+	void setSmallestCoord(glm::vec3 coord) {
+		this->smallestCoord = coord;
+	}
+
 	glm::vec3 getLargestCoord() {
 		return this->largestCoord;
 	}

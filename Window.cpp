@@ -89,6 +89,8 @@ std::vector<glm::vec3> Window::cottagePlacements = {
 	{-300, 0, -400}
 };
 std::vector<glm::mat4> Window::cottageMovements;
+CollisionInfo Window::recentCollision;
+GLfloat Window::redTime = 0;
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -149,7 +151,7 @@ bool Window::initializeObjects()
 	sphere = new Model("assets/sphere.obj");
 	enemy = new Model("assets/enemy/source/untitled.fbx");
 
-	sphere->setColor(glm::vec3(1, 0, 1));
+	sphere->setColor(glm::vec3(0, 0, 1));
 
 	models.push_back(tree);
 
@@ -301,16 +303,45 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	GLfloat enemyFrameDist = ENEMY_SPEED * deltaTime;
-	glm::vec3 moveTowards = enemyFrameDist * glm::normalize(eye - enemy->getTrueCenter());
-	glm::mat4 move = glm::translate(moveTowards);
-	enemy->setModel(move * enemy->getModel());
-	enemy->updateCenter(move);
+	GLfloat pullDown = GRAVITY * deltaTime;
+	CollisionType enemyCollision = assertEnemyCollision();
+	if (enemyCollision == NONE) {
+		// Logic to move enemy towards player
+		GLfloat enemyFrameDist = ENEMY_SPEED * deltaTime;
+		glm::vec3 moveTowards = enemyFrameDist * glm::normalize(eye - enemy->getTrueCenter());
+		glm::mat4 move = glm::translate(moveTowards);
+		enemy->setModel(move * enemy->getModel());
+		enemy->updateCenter(move);
+
+		// Logic to pull enemy to ground
+		glm::vec3 cent = enemy->getTrueCenter();
+		GLfloat minY = enemy->getSmallestCoord().y;
+		GLfloat enemyTerrainHeight = terrain->getHeightOfTerrain(cent[0], cent[2]);
+		glm::mat4 surface;
+
+		// If enemy below ground
+		if (minY < enemyTerrainHeight) {
+			glm::vec3 newCoord = glm::vec3(0, enemyTerrainHeight - minY, 0);
+			surface = glm::translate(newCoord);
+			enemy->setSmallestCoord(enemy->getSmallestCoord() + newCoord);
+		}
+		// If enemy above ground
+		else {
+			glm::vec3 newCoord = glm::vec3(0, (enemyTerrainHeight - minY) * deltaTime, 0);
+			surface = glm::translate(newCoord);
+			enemy->setSmallestCoord(enemy->getSmallestCoord() + newCoord);
+		}
+		enemy->setModel(surface * enemy->getModel());
+		enemy->updateCenter(surface);
+	}
+	else {
+		//handle later. most likely game over
+	}
 
 	// Gravity to pull camera down
-	upwardsSpeed += (GRAVITY * deltaTime);
+	upwardsSpeed += pullDown;
 	glm::vec3 movedEye = glm::vec3(eye[0], eye[1] + upwardsSpeed * deltaTime, eye[2]);
-	if (!assertPlayerCollision(movedEye)) {
+	if (assertPlayerCollision(movedEye).type == NONE) {
 		eye = movedEye;
 	}
 	GLfloat terrainHeight = terrain->getHeightOfTerrain(eye[0], eye[2]);
@@ -339,7 +370,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(terrain->getModel()));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
-	//terrain->draw(terrainTexture);
+	terrain->draw(terrainTexture);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);
@@ -383,6 +414,13 @@ void Window::displayCallback(GLFWwindow* window)
 		glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
 		for (int i = 0; i < cottageMovements.size(); ++i) {
+			//std::cout << recentCollision.cottangeInd;
+			if (recentCollision.cottangeInd == i) {
+				glUniform3fv(noTexColorLoc, 1, glm::value_ptr(glm::vec3(1, 0, 0)));
+			}
+			else {
+				glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
+			}
 			glm::mat4 place = cottageMovements[i];
 			glm::mat4 center = glm::translate(cottage->getMidCoord());
 			glm::mat4 scale = glm::scale(glm::vec3(cottage->getRadius()));
@@ -390,16 +428,28 @@ void Window::displayCallback(GLFWwindow* window)
 			glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
 			cottage->drawBound();
 		}
-		for (int i = 0; i < models.size(); ++i) {
-			glm::mat4 center = glm::translate(models[i]->getMidCoord());
-			glm::mat4 scale = glm::scale(glm::vec3(models[i]->getRadius()));
-			glm::mat4 sphereModel = center * models[i]->getModel() * scale;
-			glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
-			models[i]->drawBound();
+
+		if (recentCollision.type == TREE) {
+			glUniform3fv(noTexColorLoc, 1, glm::value_ptr(glm::vec3(1, 0, 0)));
 		}
-		glm::mat4 center = glm::translate(enemy->getMidCoord());
-		glm::mat4 scale = glm::scale(glm::vec3(enemy->getRadius()));
-		glm::mat4 sphereModel = center * enemy->getModel() * scale;
+		else {
+			glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
+		}
+		glm::mat4 center = glm::translate(tree->getMidCoord());
+		glm::mat4 scale = glm::scale(glm::vec3(tree->getRadius()));
+		glm::mat4 sphereModel = center * tree->getModel() * scale;
+		glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
+		tree->drawBound();
+
+		if (recentCollision.type == ENEMY) {
+			glUniform3fv(noTexColorLoc, 1, glm::value_ptr(glm::vec3(1, 0, 0)));
+		}
+		else {
+			glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
+		}
+		center = glm::translate(enemy->getMidCoord());
+		scale = glm::scale(glm::vec3(enemy->getRadius()));
+		sphereModel = center * enemy->getModel() * scale;
 		glUniformMatrix4fv(noTexModelLoc, 1, GL_FALSE, glm::value_ptr(sphereModel));
 		enemy->drawBound();
 
@@ -430,6 +480,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_B:
 			debugBounds = !debugBounds;
+			break;
 		default:
 			break;
 		}
@@ -447,7 +498,7 @@ void Window::processInput(GLFWwindow *window)
 		// So moving doesn't cause jumping
 		glm::vec3 newPos = systemWalkSpeed * center;
 		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
-		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
+		if (assertInSkybox(movedEye) && assertPlayerCollision(movedEye).type == NONE) {
 			eye += glm::vec3(newPos[0], 0, newPos[2]);
 		}
 		else {
@@ -458,7 +509,7 @@ void Window::processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		glm::vec3 newPos = systemWalkSpeed * center;
 		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
-		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
+		if (assertInSkybox(movedEye) && assertPlayerCollision(movedEye).type == NONE) {
 			eye -= glm::vec3(newPos[0], 0, newPos[2]);
 		}
 		else {
@@ -468,7 +519,7 @@ void Window::processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
-		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
+		if (assertInSkybox(movedEye) && assertPlayerCollision(movedEye).type == NONE) {
 			eye = movedEye;
 		}
 		else{
@@ -478,7 +529,7 @@ void Window::processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
-		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
+		if (assertInSkybox(movedEye) && assertPlayerCollision(movedEye).type == NONE) {
 			eye = movedEye;
 		}
 		else {
@@ -560,19 +611,55 @@ GLboolean Window::assertInSkybox(glm::vec3 movedEye) {
 * Currently only checks against player, will need to check for other moving
 * things as well.
 */
-GLboolean Window::assertPlayerCollision(glm::vec3 movedEye) {
+CollisionInfo Window::assertPlayerCollision(glm::vec3 movedEye) {
 	for (int i = 0; i < cottageMovements.size(); ++i) {
 		GLfloat dist = glm::distance(movedEye, 
 				glm::vec3(cottageMovements[i] * glm::vec4(cottage->getTrueCenter(), 1.0f)));
 		if (dist <= p1.radius + cottage->getCollisionRadius()) {
-			return true;
+			recentCollision = { COTTAGE, i };
+			redTime = 1;
+			return recentCollision;
 		}
 	}
 	for (int i = 0; i < models.size(); ++i) {
 		GLfloat dist = glm::distance(movedEye, models[i]->getTrueCenter());
 		if (dist <= p1.radius + models[i]->getCollisionRadius()) {
-			return true;
+			recentCollision = { TREE, -1 };
+			redTime = 1;
+			return recentCollision;
 		}
 	}
-	return false;
+	
+	if (redTime < 0) {
+		recentCollision = { NONE, -1 };
+	}
+	else {
+		redTime -= deltaTime;
+	}
+	return {NONE, -1};
+}
+
+/*
+* Will not detect collisions with static models
+*/
+CollisionType Window::assertEnemyCollision() {
+	GLfloat dist = glm::distance(eye, enemy->getTrueCenter());
+	if (dist <= p1.radius + enemy->getCollisionRadius()) {
+
+		// recent collision set not to player because
+		// recent collision checks what the play is up against.
+		recentCollision = { ENEMY, -1 };
+		redTime = 1;
+		return PLAYER;
+	}
+
+	if (recentCollision.type == ENEMY) {
+		if (redTime < 0) {
+			recentCollision = { NONE, -1 };
+		}
+		else {
+			redTime -= deltaTime;
+		}
+	}
+	return NONE;
 }

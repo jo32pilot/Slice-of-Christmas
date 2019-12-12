@@ -33,8 +33,22 @@
 #define TREE_SIZE 200
 #define PLAYER_HEIGHT 20
 #define FLOOR_OFFSET 50
-#define ENEMY_SPEED 175.0f
+#define ENEMY_SPEED 125.0f
 #define ENEMY_SPAWN_Z -800
+
+typedef enum collision_type {
+	WEAPON, 
+	PLAYER,
+	ENEMY,
+	COTTAGE,
+	TREE,
+	NONE
+} CollisionType;
+
+typedef struct collision_info {
+	CollisionType type;
+	GLint cottangeInd;
+} CollisionInfo;
 
 class Window
 {
@@ -73,6 +87,8 @@ public:
 	static std::vector<glm::vec3> cottagePlacements;
 	static std::vector<glm::mat4> cottageMovements;
 	static Model* enemy;
+	static CollisionInfo recentCollision;
+	static GLfloat redTime;
 
 	static bool initializeProgram();
 	static bool initializeObjects();
@@ -87,7 +103,8 @@ public:
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	static void setDeltaTime();
 	static GLboolean assertInSkybox(glm::vec3 movedEye);
-	static GLboolean assertPlayerCollision(glm::vec3 movedEye);
+	static CollisionInfo assertPlayerCollision(glm::vec3 movedEye);
+	static CollisionType assertEnemyCollision();
 
 };
 

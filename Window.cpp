@@ -14,6 +14,7 @@ Model* Window::tree;
 Model* Window::cottage;
 Model* Window::sphere;
 std::vector<Model*> Window::models;
+Robot* Window::robot;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -147,6 +148,7 @@ bool Window::initializeObjects()
 	tree = new Model("assets/test_tree/ChristmasTree.obj");
 	cottage = new Model("assets/cottage/Snow\ Covered\ CottageOBJ.obj");
 	sphere = new Model("assets/sphere.obj");
+	robot = new Robot("assets/robot/"); // Must have / at end to append file names
 
 	sphere->setColor(glm::vec3(1, 0, 1));
 
@@ -176,16 +178,6 @@ bool Window::initializeObjects()
 		cottageMovements.push_back(totalMovement);
 	}
 
-	for (int i = 0; i < cottageMovements.size(); ++i) {
-		for (int j = 0; j < 4; ++j) {
-			for (int k = 0; k < 4; ++k) {
-				std::cout << cottageMovements[i][j][k] << " ";
-			}
-			std::cout << std::endl;
-		}
-		std::cout << std::endl;
-	}
-
 	return true;
 }
 
@@ -197,6 +189,7 @@ void Window::cleanUp()
 	delete tree;
 	delete cottage;
 	delete sphere;
+	delete robot;
 
 	// Delete the shader program.
 	glDeleteProgram(program);
@@ -317,7 +310,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(terrain->getModel()));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(terrain->getColor()));
 	glUniform1i(normalColoringLoc, normalColoring);
-	terrain->draw(terrainTexture);
+	//terrain->draw(terrainTexture);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);
@@ -339,7 +332,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.ambient"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.diffuse"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.specular"), 1, glm::value_ptr(lightColor));
-	tree->draw(materialProgram);
+	//tree->draw(materialProgram);
 
 	// Draw cottages
 	glUseProgram(importedProgram);
@@ -351,10 +344,13 @@ void Window::displayCallback(GLFWwindow* window)
 		cottage->draw(importedProgram);
 	}
 
+	glUseProgram(noTexProgram);
+	glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniform3fv(noTexColorLoc, 1, glm::value_ptr(robot->getColor()));
+	robot->draw(noTexProgram);
+
 	if (debugBounds) {
-		glUseProgram(noTexProgram);
-		glUniformMatrix4fv(noTexProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(noTexViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniform3fv(noTexColorLoc, 1, glm::value_ptr(sphere->getColor()));
 		for (int i = 0; i < cottageMovements.size(); ++i) {
 			glm::mat4 place = cottageMovements[i];
@@ -418,12 +414,19 @@ void Window::processInput(GLFWwindow *window)
 		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye += glm::vec3(newPos[0], 0, newPos[2]);
 		}
+		else {
+			eye -= glm::vec3(newPos[0], 0, newPos[2]);
+		}
+
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		glm::vec3 newPos = systemWalkSpeed * center;
 		glm::vec3 movedEye = eye - glm::vec3(newPos[0], 0, newPos[2]);
 		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye -= glm::vec3(newPos[0], 0, newPos[2]);
+		}
+		else {
+			eye += glm::vec3(newPos[0], 0, newPos[2]);
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
@@ -432,12 +435,18 @@ void Window::processInput(GLFWwindow *window)
 		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye = movedEye;
 		}
+		else{
+			eye += glm::vec3(newPos[0], 0, newPos[2]);
+		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		glm::vec3 newPos = glm::normalize(glm::cross(center, up)) * systemWalkSpeed;
 		glm::vec3 movedEye = eye + glm::vec3(newPos[0], 0, newPos[2]);
 		if (assertInSkybox(movedEye) && !assertPlayerCollision(movedEye)) {
 			eye = movedEye;
+		}
+		else {
+			eye -= glm::vec3(newPos[0], 0, newPos[2]);
 		}
 	}
 	if (!inAir && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {

@@ -106,6 +106,7 @@
     <ClCompile Include="loadBox.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PointCloud.cpp" />
+    <ClCompile Include="Robot.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -121,6 +122,7 @@
     <ClInclude Include="PlayerBound.h" />
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="printVec3.hpp" />
+    <ClInclude Include="Robot.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Terrain.h" />

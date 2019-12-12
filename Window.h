@@ -23,6 +23,7 @@
 #include "loadBox.h"
 #include "PlayerBound.h"
 #include "Model.hpp"
+#include "Robot.h"
 
 #define WALK_SPEED 200.0f
 #define CENTER_DIVIDER 2
@@ -69,6 +70,7 @@ public:
 	static PlayerBound p1;
 	static std::vector<glm::vec3> cottagePlacements;
 	static std::vector<glm::mat4> cottageMovements;
+	static Robot* robot;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

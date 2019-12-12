@@ -386,10 +386,10 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(materialProjectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(materialViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(materialModelLoc, 1, GL_FALSE, glm::value_ptr(tree->getModel()));
+	glm::vec3 lightPos = tree->getTrueCenter() + glm::vec3(0, tree->getCollisionRadius(), 0);
 	glm::vec3 lightColor = glm::vec3(1.0f);
-
 	glUniform3fv(glGetUniformLocation(materialProgram, "viewPos"), 1, glm::value_ptr(eye));
-	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(glm::vec3(0, 1000, 0)));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(lightPos));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.ambient"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.diffuse"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.specular"), 1, glm::value_ptr(lightColor));
@@ -630,7 +630,12 @@ CollisionInfo Window::assertPlayerCollision(glm::vec3 movedEye) {
 			return recentCollision;
 		}
 	}
-	
+	GLfloat dist = glm::distance(movedEye, enemy->getTrueCenter());
+	if (dist <= p1.radius + enemy->getCollisionRadius()) {
+		recentCollision = { ENEMY, -1 };
+		redTime = 1;
+		return recentCollision;
+	}
 	if (redTime < 0) {
 		recentCollision = { NONE, -1 };
 	}

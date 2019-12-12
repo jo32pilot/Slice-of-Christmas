@@ -44,6 +44,7 @@ public:
 		this->trueCenter = midCoord;
 		this->radius = glm::distance(largestCoord, smallestCoord) / DIAMETER_TO_RADIUS;
 		this->collisionRadius = radius;
+		this->hasTextures = false;
 	}
 
 	// draws the model, and thus all its meshes

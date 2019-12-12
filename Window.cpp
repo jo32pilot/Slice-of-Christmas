@@ -387,12 +387,13 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(materialViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(materialModelLoc, 1, GL_FALSE, glm::value_ptr(tree->getModel()));
 	glm::vec3 lightColor = glm::vec3(1.0f);
+
 	glUniform3fv(glGetUniformLocation(materialProgram, "viewPos"), 1, glm::value_ptr(eye));
-	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(glm::vec3(100)));
+	glUniform3fv(glGetUniformLocation(materialProgram, "light.position"), 1, glm::value_ptr(glm::vec3(0, 1000, 0)));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.ambient"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.diffuse"), 1, glm::value_ptr(lightColor));
 	glUniform3fv(glGetUniformLocation(materialProgram, "light.specular"), 1, glm::value_ptr(lightColor));
-	//tree->draw(materialProgram);
+	tree->draw(materialProgram);
 
 	// Draw cottages
 	glUseProgram(importedProgram);
